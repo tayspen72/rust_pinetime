@@ -1,13 +1,13 @@
 use super::super::nrf52_mcu as mcu;
-use super::p0 as p0;
+use super::p0 as io;
 
 const SPI_SCLK: u32 = (1 << 2);
 const SPI_MOSI: u32 = (1 << 3);
 const SPI_MISO: u32 = (1 << 4);
 
-// static mut SPI_STATE: pState = pState::Uninitialized;
+static mut SPI_STATE: mcu::PeripheralState = mcu::PeripheralState::Uninitialized;
 
-pub fn init_spi(p: &nrf52832_pac::Peripherals){
+pub fn init(p: &nrf52832_pac::Peripherals){
     let spi = &p.SPI0;
 
     //define pins used
@@ -27,23 +27,23 @@ pub fn init_spi(p: &nrf52832_pac::Peripherals){
     spi.enable.write(|w| w.enable().enabled());
 
     //update the state flag
-    // SPI_STATE = pState::Ready;
+    unsafe {SPI_STATE = mcu::PeripheralState::Ready; }
 }
 
-pub fn get_state() -> mcu::PeripheralState 
-{
-    // match SPI_STATE{
-    //     mcu::PeripheralState ::Fault => mcu::PeripheralState ::Fault,
-    //     mcu::PeripheralState ::Ready => mcu::PeripheralState ::Ready,
-    //     mcu::PeripheralState ::Uninitialized => mcu::PeripheralState ::Uninitialized
-    // }
-    mcu::PeripheralState::Fault
+pub fn get_state() -> mcu::PeripheralState {
+    unsafe {
+        match SPI_STATE{
+            mcu::PeripheralState ::Fault => mcu::PeripheralState ::Fault,
+            mcu::PeripheralState ::Ready => mcu::PeripheralState ::Ready,
+            mcu::PeripheralState ::Uninitialized => mcu::PeripheralState ::Uninitialized
+        }
+    }
 }
 
 #[allow(dead_code)]
 pub fn write_byte(p: &nrf52832_pac::Peripherals, cs: u8, val: u8){
     //set the chip select low for spi writing
-    p0::write_pin(&p, cs, p0::PinState::PinLow);
+    io::pin_set(&p, cs, io::PinState::PinLow);
 
     //write the byte to the peripheral
     unsafe { p.SPI0.txd.write(|w| w.bits(val as u32)); }
@@ -52,7 +52,7 @@ pub fn write_byte(p: &nrf52832_pac::Peripherals, cs: u8, val: u8){
     read_byte(&p);
 
     //set the chip select high when finished
-    p0::write_pin(&p, cs, p0::PinState::PinHigh);
+    io::pin_set(&p, cs, io::PinState::PinHigh);
 
 
 }

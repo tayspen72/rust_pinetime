@@ -11,7 +11,7 @@ pub enum PinState {
 }
 
 #[allow(dead_code)]
-pub fn init_pin(p: &nrf52832_pac::Peripherals, pin: u8, dir: PinDirection, state: PinState){
+pub fn pin_init(p: &nrf52832_pac::Peripherals, pin: u8, dir: PinDirection, state: PinState){
     //set pin direction    
     match dir{
         PinDirection::PinInput => {
@@ -32,7 +32,7 @@ pub fn init_pin(p: &nrf52832_pac::Peripherals, pin: u8, dir: PinDirection, state
 }
 
 #[allow(dead_code)]
-pub fn write_pin(p: &nrf52832_pac::Peripherals, pin: u8, state: PinState){
+pub fn pin_set(p: &nrf52832_pac::Peripherals, pin: u8, state: PinState){
     unsafe { 
         match state{
             PinState::PinLow => p.P0.outclr.write(|w| w.bits(1 << pin)),

@@ -20,23 +20,36 @@ pub enum PeripheralState{
     Uninitialized
 }
 
-#[allow(dead_code)]
-pub fn init_pin(p: &nrf52832_pac::Peripherals, pin: u8, dir: io::PinDirection, state: io::PinState){
-    io::init_pin(p, pin, dir, state);
-}
+const SYSTICK_FREQUENCY: u32 = 80_000;  //10ms 
 
 pub fn init_system(p: &nrf52832_pac::Peripherals){    
-    flash::init_flash(&p);
-    lcd::init_lcd(&p);
+    //init core peripherals
+    flash::init(&p);
+    lcd::init(&p);
+    init_systick();
+
+    //init lcd state
+    lcd::set_backlight(&p, lcd::BacklightBrightness::Brightness1);
 }
 
-pub fn take_peripherals() -> nrf52832_pac::Peripherals {
-    nrf52832_pac::Peripherals::take().unwrap()
+fn init_systick(){
+        // config the SysTick timer to fire exception every N cycles
+        let p = cortex_m::Peripherals::take().unwrap();
+        let mut systick = p.SYST;
+        systick.set_clock_source(cortex_m::peripheral::syst::SystClkSource::Core);
+        systick.set_reload(SYSTICK_FREQUENCY); // period = 1s
+        systick.enable_counter();
+        systick.enable_interrupt();
 }
 
 #[allow(dead_code)]
 pub fn spi_get_state() -> PeripheralState{
     spi::get_state()
+}
+
+#[allow(dead_code)]
+pub fn spi_read_byte(p: &nrf52832_pac::Peripherals) -> u8{
+    spi::read_byte(&p)
 }
 
 #[allow(dead_code)]
@@ -49,10 +62,8 @@ pub fn spi_write(p: &nrf52832_pac::Peripherals, cs: ChipSelect, val: u8){
 
     //write the byte
     spi::write_byte(&p, cs_pin, val);
-
 }
 
-#[allow(dead_code)]
-pub fn spi_read_byte(p: &nrf52832_pac::Peripherals) -> u8{
-    spi::read_byte(&p)
+pub fn take_peripherals() -> nrf52832_pac::Peripherals {
+    nrf52832_pac::Peripherals::take().unwrap()
 }
