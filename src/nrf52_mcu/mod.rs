@@ -1,12 +1,46 @@
+/*
+ * mod.rs -> nrf52_mcu 
+ *
+ * Created: 21 Jan 2020
+ * Author: T. Spencer
+ */
+
+//=========================================================================
+// Notes
+//=========================================================================
+/*
+ * This file is meant to provide access to the underlying framework for 
+ * accessing the needed peripheral set for the nrf52832 MCU. All sub-modules
+ * will be defined and instantiated here as needed.
+ * 
+ */
+
+//=========================================================================
+// Definitions
+//=========================================================================
+
+
+//=========================================================================
+// Crates
+//=========================================================================
+
+
+//=========================================================================
+// Mods
+//=========================================================================
 use nrf52832_pac;
 pub mod p0;
+pub use p0 as io;
 pub mod spi;
 pub mod uart;
 
 use crate::flash as flash;
 use crate::lcd as lcd;
-pub use p0 as io;
 
+
+//=========================================================================
+// Types
+//=========================================================================
 #[allow(dead_code)]
 pub enum ChipSelect{
     Lcd,
@@ -20,8 +54,16 @@ pub enum PeripheralState{
     Uninitialized
 }
 
+
+//=========================================================================
+// Variables
+//=========================================================================
 const SYSTICK_FREQUENCY: u32 = 80_000;  //10ms 
 
+
+//=========================================================================
+// Implementations
+//=========================================================================
 pub fn init_system(p: &nrf52832_pac::Peripherals){    
     //init core peripherals
     flash::init(&p);
@@ -40,11 +82,6 @@ fn init_systick(){
         systick.set_reload(SYSTICK_FREQUENCY); // period = 1s
         systick.enable_counter();
         systick.enable_interrupt();
-}
-
-#[allow(dead_code)]
-pub fn spi_get_state() -> PeripheralState{
-    spi::get_state()
 }
 
 #[allow(dead_code)]
@@ -67,3 +104,16 @@ pub fn spi_write(p: &nrf52832_pac::Peripherals, cs: ChipSelect, val: u8){
 pub fn take_peripherals() -> nrf52832_pac::Peripherals {
     nrf52832_pac::Peripherals::take().unwrap()
 }
+
+
+//=========================================================================
+// TaskHandler
+//=========================================================================
+// pub fn task_handler(_p: &nrf52832_pac::Peripherals){    
+// }
+
+
+//=========================================================================
+// Interrupt
+//=========================================================================
+

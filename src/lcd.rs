@@ -1,10 +1,39 @@
-use crate::nrf52_mcu as cpu;
+/*
+ * lcd.rs
+ *
+ * Created: 21 Jan 2020
+ * Author: T. Spencer
+ */
 
-pub const LCD_CS: u8 = 25;
-pub const LCD_BACKLIGHT1: u8 = 25;
-pub const LCD_BACKLIGHT2: u8 = 25;
-pub const LCD_BACKLIGHT3: u8 = 25;
+//=========================================================================
+// Notes
+//=========================================================================
 
+
+//=========================================================================
+// Definitions
+//=========================================================================
+pub const LCD_CS: u8 = 25;              //active low, manual control with SPI
+pub const LCD_RESET: u8 = 26;           //active low, hold > 5us for reset
+pub const LCD_BACKLIGHT1: u8 = 14;      
+pub const LCD_BACKLIGHT2: u8 = 22;
+pub const LCD_BACKLIGHT3: u8 = 23;
+
+
+//=========================================================================
+// Crates
+//=========================================================================
+
+
+//=========================================================================
+// Mods
+//=========================================================================
+use crate::nrf52_mcu as mcu;
+
+
+//=========================================================================
+// Types
+//=========================================================================
 #[allow(dead_code)]
 pub enum BacklightBrightness{
     Brightness0   = 0x0,
@@ -17,45 +46,74 @@ pub enum BacklightBrightness{
     Brightness7   = 0x7
 }
 
+
+//=========================================================================
+// Variables
+//=========================================================================
+static mut _LCD_STATE: mcu::PeripheralState = mcu::PeripheralState::Uninitialized;
+
+
+//=========================================================================
+// Implementations
+//=========================================================================
 pub fn init(p: &nrf52832_pac::Peripherals){
     //in master mode, cs is standard io. Init as output with state high
-    cpu::io::pin_init(&p, LCD_CS, cpu::io::PinDirection::PinOutput, cpu::io::PinState::PinHigh);
+    mcu::io::pin_init(&p, LCD_CS, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
+    //reset pin must be held high for operation
+    mcu::io::pin_init(&p, LCD_RESET, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
     //init lcd backlight pins
-    cpu::io::pin_init(&p, LCD_BACKLIGHT1, cpu::io::PinDirection::PinOutput, cpu::io::PinState::PinLow);
-    cpu::io::pin_init(&p, LCD_BACKLIGHT2, cpu::io::PinDirection::PinOutput, cpu::io::PinState::PinLow);
-    cpu::io::pin_init(&p, LCD_BACKLIGHT3, cpu::io::PinDirection::PinOutput, cpu::io::PinState::PinLow);
+    mcu::io::pin_init(&p, LCD_BACKLIGHT1, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinLow);
+    mcu::io::pin_init(&p, LCD_BACKLIGHT2, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinLow);
+    mcu::io::pin_init(&p, LCD_BACKLIGHT3, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
 
     //init spi peripheral
-    //TODO: Look into if let type confitions for enum matching
-    // if let cpu::spi::get_state() = cpu::PeripheralState::Uninitialized{
-    cpu::spi::init(&p); 
-    // }
+    mcu::spi::init(&p);
 }
 
 pub fn set_backlight(p: &nrf52832_pac::Peripherals, val: BacklightBrightness){
+    unsafe {
+        if let mcu::PeripheralState::Uninitialized = _LCD_STATE{
+            init(&p);
+        }
+    }
+    
     let val = val as u8;
 
     //set Backlight pin 3
     if val & 0x4 > 0 {
-        cpu::io::pin_set(&p, LCD_BACKLIGHT3, cpu::io::PinState::PinHigh);
+        mcu::io::pin_set(&p, LCD_BACKLIGHT3, mcu::io::PinState::PinHigh);
     }
     else{
-        cpu::io::pin_set(&p, LCD_BACKLIGHT3, cpu::io::PinState::PinLow);
+        mcu::io::pin_set(&p, LCD_BACKLIGHT3, mcu::io::PinState::PinLow);
     }
 
     //set Backlight pin 2
     if val & 0x2 > 0 {
-        cpu::io::pin_set(&p, LCD_BACKLIGHT2, cpu::io::PinState::PinHigh);
+        mcu::io::pin_set(&p, LCD_BACKLIGHT2, mcu::io::PinState::PinHigh);
     }
     else{
-        cpu::io::pin_set(&p, LCD_BACKLIGHT2, cpu::io::PinState::PinLow);
+        mcu::io::pin_set(&p, LCD_BACKLIGHT2, mcu::io::PinState::PinLow);
     }
 
     //set Backlight pin 1
     if val & 0x1 > 0 {
-        cpu::io::pin_set(&p, LCD_BACKLIGHT1, cpu::io::PinState::PinHigh);
+        mcu::io::pin_set(&p, LCD_BACKLIGHT1, mcu::io::PinState::PinHigh);
     }
     else{
-        cpu::io::pin_set(&p, LCD_BACKLIGHT1, cpu::io::PinState::PinLow);
+        mcu::io::pin_set(&p, LCD_BACKLIGHT1, mcu::io::PinState::PinLow);
     }
 }
+
+
+//=========================================================================
+// TaskHandler
+//=========================================================================
+pub fn task_handler(_p: &nrf52832_pac::Peripherals){
+    
+}
+
+
+//=========================================================================
+// Interrupt
+//=========================================================================
+
