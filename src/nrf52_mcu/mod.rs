@@ -37,6 +37,8 @@ pub mod uart;
 use crate::flash as flash;
 use crate::lcd as lcd;
 
+use cortex_m_semihosting::hprintln;
+
 
 //=========================================================================
 // Types
@@ -65,6 +67,8 @@ const SYSTICK_FREQUENCY: u32 = 80_000;  //10ms
 // Implementations
 //=========================================================================
 pub fn init_system(p: &nrf52832_pac::Peripherals){    
+    hprintln!("Initializing system.").unwrap();
+
     //init core peripherals
     flash::init(&p);
     lcd::init(&p);
@@ -72,6 +76,18 @@ pub fn init_system(p: &nrf52832_pac::Peripherals){
 
     //init lcd state
     lcd::set_backlight(&p, lcd::BacklightBrightness::Brightness1);
+
+    //write some values as a test
+    hprintln!("Writing some bytes...").unwrap();
+    lcd::write_byte(&p, 0x0);
+    lcd::write_byte(&p, 0x1);
+    lcd::write_byte(&p, 0x2);
+    lcd::write_byte(&p, 0x3);
+    lcd::write_byte(&p, 0x4);
+    lcd::write_byte(&p, 0x5);
+    lcd::write_byte(&p, 0x6);
+    lcd::write_byte(&p, 0x7);
+    hprintln!("All done.").unwrap();
 }
 
 fn init_systick(){

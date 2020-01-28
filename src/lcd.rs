@@ -104,6 +104,10 @@ pub fn set_backlight(p: &nrf52832_pac::Peripherals, val: BacklightBrightness){
     }
 }
 
+pub fn write_byte(p: &nrf52832_pac::Peripherals, val: u8)
+{
+    mcu::spi::write_byte(&p, LCD_CS, val);
+}
 
 //=========================================================================
 // TaskHandler
