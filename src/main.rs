@@ -35,6 +35,9 @@ use cortex_m_rt::entry;
 //=========================================================================
 mod nrf52_mcu;
 use nrf52_mcu as mcu;
+
+mod CoreDrivers;
+
 mod lcd;
 mod flash;
 mod task;

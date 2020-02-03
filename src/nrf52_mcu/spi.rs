@@ -69,7 +69,7 @@ pub fn init(p: &nrf52832_pac::Peripherals){
 
 #[allow(dead_code)]
 pub fn write_byte(p: &nrf52832_pac::Peripherals, cs: u8, val: u8){
-    unsafe { 
+    unsafe {
         if let mcu::PeripheralState::Uninitialized = _SPI_STATE {
             init(&p);
         }
@@ -87,6 +87,9 @@ pub fn write_byte(p: &nrf52832_pac::Peripherals, cs: u8, val: u8){
     //read buffer to prevent overflow
     read_byte(&p);
 
+    //start the transfer task
+    while p.SPIM0.events_endtx.read().bits() < 1;
+
     //set the chip select high when finished
     io::pin_set(&p, cs, io::PinState::PinHigh);
 }
@@ -99,9 +102,9 @@ pub fn write_byte_dma(p: nrf52832_pac::Peripherals, buf: *const [u8], buf_length
         }
     }
 
-//    let src = &buf as *const i32;
-
-//    unsafe { p.SPIM0.txd.ptr.write(|w| w.bits(buf.into())); }
+    //load buffer address for DMA
+    //TODO: Look at how the nrf52_pac associates registers with address values
+    //p.SPIM0.txd.ptr.write(|w| w.bits(0x0));
 
 }
 
