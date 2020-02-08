@@ -88,7 +88,7 @@ pub fn write_byte(p: &nrf52832_pac::Peripherals, cs: u8, val: u8){
     read_byte(&p);
 
     //start the transfer task
-    while p.SPIM0.events_endtx.read().bits() < 1;
+    while p.SPIM0.events_endtx.read().bits() < 1 {};
 
     //set the chip select high when finished
     io::pin_set(&p, cs, io::PinState::PinHigh);

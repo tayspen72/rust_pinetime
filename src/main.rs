@@ -33,14 +33,8 @@ use cortex_m_rt::entry;
 //=========================================================================
 // Mods
 //=========================================================================
-mod nrf52_mcu;
-use nrf52_mcu as mcu;
-
+#[allow(non_snake_case)]
 mod CoreDrivers;
-
-mod lcd;
-mod flash;
-mod task;
 
 
 //=========================================================================
@@ -58,11 +52,7 @@ mod task;
 //=========================================================================
 #[entry]
 fn main() -> ! {
-    let p = mcu::take_peripherals();
-
-    mcu::init_system(&p);
-
-    task::task_handler(&p);
+    CoreDrivers::init_system();
 
     loop {
         

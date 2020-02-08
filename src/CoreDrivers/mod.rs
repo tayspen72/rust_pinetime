@@ -21,6 +21,8 @@ pub const PIN_LOW: bool =     false;
 //=========================================================================
 // Crates
 //=========================================================================
+use nrf52832_pac;
+use nrf52832_pac::Peripherals as P;
 
 
 //=========================================================================
@@ -33,23 +35,12 @@ pub const PIN_LOW: bool =     false;
 //=========================================================================
 // Types
 //=========================================================================
-pub enum McuPort{
-    Port0
-}
-
+#[allow(dead_code)]
 pub enum McuPinDirection{
     Input = 0,
     Output = 1
 }
 
-pub enum McuPmuxFunc{
-    FuncA = 0,
-    FuncB = 1,
-    FuncC = 2,
-    FuncE = 4,
-    FuncF = 5,
-    FuncG = 6
-}
 
 
 //=========================================================================
@@ -60,15 +51,21 @@ pub enum McuPmuxFunc{
 //=========================================================================
 // Implementations
 //=========================================================================
-pub fn MCU_GetPinState(_port: McuPort, pin: u8) -> bool {
+pub fn get_pin_state(p: P, pin: u8) -> bool {
     true
 }
 
-pub fn MCU_PinSetup(_port: McuPort, pin: u8, dir: McuPinDirection, state: u8, pull: u8){
+pub fn init_system(){
+    let mut p = P::take();
+
 
 }
 
-pub fn MCU_SetPinState(_port: McuPort, pin: u8, state: bool){
+pub fn pin_setup(p: P, pin: u8, dir: McuPinDirection, state: u8, pull: u8){
+
+}
+
+pub fn set_pin_state(p: P, pin: u8, state: bool){
 
 }
 
