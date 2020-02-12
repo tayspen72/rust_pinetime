@@ -13,11 +13,6 @@
 //=========================================================================
 // Definitions
 //=========================================================================
-pub const LCD_CS: u8 = 25;              //active low, manual control with SPI
-pub const LCD_RESET: u8 = 26;           //active low, hold > 5us for reset
-pub const LCD_BACKLIGHT1: u8 = 14;      
-pub const LCD_BACKLIGHT2: u8 = 22;
-pub const LCD_BACKLIGHT3: u8 = 23;
 
 
 //=========================================================================
