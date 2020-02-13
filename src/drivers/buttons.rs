@@ -40,23 +40,30 @@ use crate::mcu;
 // Implementations
 //=========================================================================
 pub fn init() {
-    //init buttons
-    mcu::pin_init(config::BUTTON_1, mcu::PinDirection::PinInput, mcu::PinState::NA);
-    mcu::pin_init(config::BUTTON_2, mcu::PinDirection::PinInput, mcu::PinState::NA);
-    mcu::pin_init(config::BUTTON_3, mcu::PinDirection::PinInput, mcu::PinState::NA);
-    mcu::pin_init(config::BUTTON_4, mcu::PinDirection::PinInput, mcu::PinState::NA);
 
-    //init corresponding LEDs
-    mcu::pin_init(config::LED_1, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
-    mcu::pin_init(config::LED_2, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
-    mcu::pin_init(config::LED_3, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
-    mcu::pin_init(config::LED_4, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    for i in 0..config::BUTTON.len() {
+        //init buttons
+        mcu::pin_setup(config::BUTTON[i], mcu::PinDirection::PinInput, mcu::PinState::NA);
+        //init corresponding LEDs
+        mcu::pin_setup(config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    }
 }
 
 //=========================================================================
 // TaskHandler
 //=========================================================================
-
+pub fn task_handler() {
+    for i in 0..config::BUTTON.len() {
+        match mcu::get_pin_state(config::BUTTON[i]) {
+            //if low (button pressed) - set led pin low (on)
+            mcu::PinState::PinLow => mcu::set_pin_low(config::LED[i]),
+            //if high (button not pressed) - set led pin high (off)
+            mcu::PinState::PinHigh => mcu::set_pin_high(config::LED[i]),
+            //else, no response
+            _ => (),
+        };
+    }
+}
 
 //=========================================================================
 // Interrupt

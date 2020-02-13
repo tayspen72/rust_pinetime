@@ -45,7 +45,6 @@ pub enum BacklightBrightness{
 //=========================================================================
 // Variables
 //=========================================================================
-static mut _LCD_STATE: mcu::PeripheralState = mcu::PeripheralState::Uninitialized;
 
 
 //=========================================================================
@@ -53,13 +52,13 @@ static mut _LCD_STATE: mcu::PeripheralState = mcu::PeripheralState::Uninitialize
 //=========================================================================
 pub fn init(p: &nrf52832_pac::Peripherals){
     //in master mode, cs is standard io. Init as output with state high
-    mcu::io::pin_init(&p, LCD_CS, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
+    mcu::io::pin_setup(LCD_CS, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
     //reset pin must be held high for operation
-    mcu::io::pin_init(&p, LCD_RESET, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
+    mcu::io::pin_setup(LCD_RESET, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
     //init lcd backlight pins
-    mcu::io::pin_init(&p, LCD_BACKLIGHT1, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinLow);
-    mcu::io::pin_init(&p, LCD_BACKLIGHT2, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinLow);
-    mcu::io::pin_init(&p, LCD_BACKLIGHT3, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
+    mcu::io::pin_setup(&p, LCD_BACKLIGHT1, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinLow);
+    mcu::io::pin_setup(&p, LCD_BACKLIGHT2, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinLow);
+    mcu::io::pin_setup(&p, LCD_BACKLIGHT3, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
 
     //init spi peripheral
     mcu::spi::init(&p);

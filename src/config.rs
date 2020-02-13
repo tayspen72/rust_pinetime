@@ -26,14 +26,8 @@
 //const SPI_MISO: u8 = 4;
 
 /** Buttons **/
-pub const BUTTON_1: u8 = 13;
-pub const BUTTON_2: u8 = 14;
-pub const BUTTON_3: u8 = 15;
-pub const BUTTON_4: u8 = 16;
-pub const LED_1: u8 = 17;
-pub const LED_2: u8 = 18;
-pub const LED_3: u8 = 19;
-pub const LED_4: u8 = 20;
+pub const BUTTON: [u8; 4] = [13, 14, 15, 16];
+pub const LED: [u8; 4] = [17, 18, 19, 20];
 
 
 //=========================================================================

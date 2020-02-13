@@ -22,9 +22,9 @@ pub enum PinDirection {
 
 #[allow(dead_code)]
 pub enum PinState {
-    PinLow = 0,
-    PinHigh = 1,
-    NA = 2,
+    PinLow,
+    PinHigh,
+    NA
 }
 
 
@@ -32,6 +32,7 @@ pub enum PinState {
 // Crates
 //=========================================================================
 use nrf52832_pac;
+use core::ops::BitAnd;
 
 
 //=========================================================================
@@ -54,15 +55,15 @@ use nrf52832_pac;
 //=========================================================================
 //TODO: Finish this
 pub fn init(){
-
+    ();
 }
 
 #[allow(dead_code)]
-pub fn pin_init(pin: u8, dir: PinDirection, state: PinState){
+pub fn pin_setup(pin: u8, dir: PinDirection, state: PinState){
     let p =  nrf52832_pac::Peripherals::take().unwrap();
 
     //set pin direction
-    match dir{
+    match dir {
         PinDirection::PinInput => {
             p.P0.pin_cnf[pin as usize].write(|w| w.dir().input());
             p.P0.pin_cnf[pin as usize].write(|w| w.input().connect());
@@ -74,7 +75,7 @@ pub fn pin_init(pin: u8, dir: PinDirection, state: PinState){
                 match state {
                     PinState::PinLow => p.P0.outclr.write(|w| w.bits(1 << pin)),
                     PinState::PinHigh => p.P0.outset.write(|w| w.bits(1 << pin)),
-                    _ => (),
+                    _ => ()
                 };
             }
         }
@@ -82,7 +83,32 @@ pub fn pin_init(pin: u8, dir: PinDirection, state: PinState){
 }
 
 #[allow(dead_code)]
-pub fn pin_set(p: &nrf52832_pac::Peripherals, pin: u8, state: PinState){
+pub fn get_pin_state(pin: u8) -> PinState {
+    let p =  nrf52832_pac::Peripherals::take().unwrap();
+    if p.P0.in_.read().bits().bitand(1 << pin).gt(&0) {
+        PinState::PinHigh
+    }
+    else{
+        PinState::PinLow
+    }
+}
+
+#[allow(dead_code)]
+pub fn set_pin_high(pin: u8) {
+    let p =  nrf52832_pac::Peripherals::take().unwrap();
+    unsafe { p.P0.outset.write(|w| w.bits(1 << pin)); }
+}
+
+#[allow(dead_code)]
+pub fn set_pin_low(pin: u8) {
+    let p =  nrf52832_pac::Peripherals::take().unwrap();
+    unsafe { p.P0.outclr.write(|w| w.bits(1 << pin)); }
+}
+
+#[allow(dead_code)]
+pub fn set_pin_state(pin: u8, state: PinState) {
+    let p =  nrf52832_pac::Peripherals::take().unwrap();
+
     unsafe {
         match state{
             PinState::PinLow => p.P0.outclr.write(|w| w.bits(1 << pin)),
@@ -91,6 +117,7 @@ pub fn pin_set(p: &nrf52832_pac::Peripherals, pin: u8, state: PinState){
         };
     };
 }
+
 
 //=========================================================================
 // TaskHandler
