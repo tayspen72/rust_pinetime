@@ -2,7 +2,7 @@
 authors = ["Taylor Spencer <tayspen72@gmail.com>"]
 edition = "2018"
 readme = "README.md"
-name = "nrf52"
+name = "pinetime"
 version = "0.1.0"
 
 [dependencies]
@@ -17,7 +17,7 @@ panic-halt = "0.2.0"
 nrf52_dk = []
 
 [[bin]]
-name = "nrf52"
+name = "pinetime"
 test = false
 bench = false
 

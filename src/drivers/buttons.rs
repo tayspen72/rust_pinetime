@@ -1,7 +1,7 @@
 /*
- * p0.rs
+ * buttons.rs
  *
- * Created: 21 Jan 2020
+ * Created:  12 Feb 2020
  * Author: T. Spencer
  */
 
@@ -23,7 +23,8 @@
 //=========================================================================
 // Mods
 //=========================================================================
-
+use crate::config;
+use crate::mcu;
 
 //=========================================================================
 // Types
@@ -38,7 +39,19 @@
 //=========================================================================
 // Implementations
 //=========================================================================
+pub fn init() {
+    //init buttons
+    mcu::pin_init(config::BUTTON_1, mcu::PinDirection::PinInput, mcu::PinState::NA);
+    mcu::pin_init(config::BUTTON_2, mcu::PinDirection::PinInput, mcu::PinState::NA);
+    mcu::pin_init(config::BUTTON_3, mcu::PinDirection::PinInput, mcu::PinState::NA);
+    mcu::pin_init(config::BUTTON_4, mcu::PinDirection::PinInput, mcu::PinState::NA);
 
+    //init corresponding LEDs
+    mcu::pin_init(config::LED_1, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_init(config::LED_2, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_init(config::LED_3, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_init(config::LED_4, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+}
 
 //=========================================================================
 // TaskHandler
