@@ -23,7 +23,10 @@
 //=========================================================================
 // Mods
 //=========================================================================
-use crate::nrf52_mcu as mcu;
+use crate::config;
+//use crate::CoreDrivers as core;
+use crate::mcu;
+
 
 
 //=========================================================================
@@ -50,65 +53,62 @@ pub enum BacklightBrightness{
 //=========================================================================
 // Implementations
 //=========================================================================
-pub fn init(p: &nrf52832_pac::Peripherals){
+pub fn init(){
     //in master mode, cs is standard io. Init as output with state high
-    mcu::io::pin_setup(LCD_CS, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_CS, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
     //reset pin must be held high for operation
-    mcu::io::pin_setup(LCD_RESET, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
     //init lcd backlight pins
-    mcu::io::pin_setup(&p, LCD_BACKLIGHT1, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinLow);
-    mcu::io::pin_setup(&p, LCD_BACKLIGHT2, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinLow);
-    mcu::io::pin_setup(&p, LCD_BACKLIGHT3, mcu::io::PinDirection::PinOutput, mcu::io::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_BACKLIGHT[0], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
+    mcu::pin_setup(config::LCD_BACKLIGHT[1], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
+    mcu::pin_setup(config::LCD_BACKLIGHT[2], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+
+    set_backlight(BacklightBrightness::Brightness3);
 
     //init spi peripheral
-    mcu::spi::init(&p);
+//    mcu::spi::init(&p);
 }
 
-pub fn set_backlight(p: &nrf52832_pac::Peripherals, val: BacklightBrightness){
-    unsafe {
-        if let mcu::PeripheralState::Uninitialized = _LCD_STATE{
-            init(&p);
-        }
-    }
-    
+pub fn set_backlight(val: BacklightBrightness){
     let val = val as u8;
 
     //set Backlight pin 3
     if val & 0x4 > 0 {
-        mcu::io::pin_set(&p, LCD_BACKLIGHT3, mcu::io::PinState::PinHigh);
+        mcu::set_pin_high(config::LCD_BACKLIGHT[2]);
     }
     else{
-        mcu::io::pin_set(&p, LCD_BACKLIGHT3, mcu::io::PinState::PinLow);
+        mcu::set_pin_low(config::LCD_BACKLIGHT[2]);
     }
 
     //set Backlight pin 2
     if val & 0x2 > 0 {
-        mcu::io::pin_set(&p, LCD_BACKLIGHT2, mcu::io::PinState::PinHigh);
+        mcu::set_pin_high(config::LCD_BACKLIGHT[1]);
     }
     else{
-        mcu::io::pin_set(&p, LCD_BACKLIGHT2, mcu::io::PinState::PinLow);
+        mcu::set_pin_low(config::LCD_BACKLIGHT[1]);
     }
+
 
     //set Backlight pin 1
     if val & 0x1 > 0 {
-        mcu::io::pin_set(&p, LCD_BACKLIGHT1, mcu::io::PinState::PinHigh);
+        mcu::set_pin_high(config::LCD_BACKLIGHT[0]);
     }
     else{
-        mcu::io::pin_set(&p, LCD_BACKLIGHT1, mcu::io::PinState::PinLow);
+        mcu::set_pin_low(config::LCD_BACKLIGHT[0]);
     }
 }
 
-pub fn write_byte(p: &nrf52832_pac::Peripherals, val: u8)
-{
-    mcu::spi::write_byte(&p, LCD_CS, val);
-}
+//pub fn write_display_buffer()
+//{
+//    core::spi::write_buffer(1, 2, 3);
+//}
 
 //=========================================================================
 // TaskHandler
 //=========================================================================
-pub fn task_handler(_p: &nrf52832_pac::Peripherals){
-    
-}
+//pub fn task_handler(_p: &nrf52832_pac::Peripherals){
+//
+//}
 
 
 //=========================================================================

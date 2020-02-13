@@ -34,9 +34,15 @@ use cortex_m_rt::entry;
 //=========================================================================
 // Mods
 //=========================================================================
+mod config;
+#[allow(non_snake_case)]
+#[allow(unused_imports)]
+mod CoreDrivers;
+#[allow(unused_imports)]
+use CoreDrivers as core;
 mod drivers;
 mod mcu;
-mod config;
+
 
 //=========================================================================
 // Types
@@ -63,6 +69,7 @@ fn main() -> ! {
 
 fn app_init(){
     drivers::buttons::init();
+    drivers::lcd::init();
 }
 
 

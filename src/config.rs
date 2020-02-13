@@ -14,16 +14,14 @@
 // Definitions
 //=========================================================================
 /** LCD **/
-//pub const LCD_CS: u8 = 25;              //active low, manual control with SPI
-//pub const LCD_RESET: u8 = 26;           //active low, hold > 5us for reset
-//pub const LCD_BACKLIGHT1: u8 = 14;
-//pub const LCD_BACKLIGHT2: u8 = 22;
-//pub const LCD_BACKLIGHT3: u8 = 23;
+pub const LCD_CS: u8 = 25;              //active low, manual control with SPI
+pub const LCD_RESET: u8 = 26;           //active low, hold > 5us for reset
+pub const LCD_BACKLIGHT: [u8; 3] = [14, 22, 23];
 
 /** SPI **/
-//const SPI_SCLK: u8 = 2;
-//const SPI_MOSI: u8 = 3;
-//const SPI_MISO: u8 = 4;
+pub const SPI_SCLK: u8 = 2;
+pub const SPI_MOSI: u8 = 3;
+pub const SPI_MISO: u8 = 4;
 
 /** Buttons **/
 pub const BUTTON: [u8; 4] = [13, 14, 15, 16];
