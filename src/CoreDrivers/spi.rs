@@ -21,6 +21,7 @@
 use crate::config;
 //use crate::mcu;
 use nrf52832_pac;
+use core::f32::MAX;
 
 
 //=========================================================================
@@ -43,8 +44,9 @@ pub enum SpiState{
 //=========================================================================
 // Variables
 //=========================================================================
+pub const MAX_TRANSFER_SIZE: usize = 0x7F;
+static mut RECEIVE_BUFFER: [u8; MAX_TRANSFER_SIZE] = [ 0; MAX_TRANSFER_SIZE];
 static mut _SPI_STATE: SpiState = SpiState::Uninitialized;
-
 
 //=========================================================================
 // Implementations
@@ -54,30 +56,34 @@ pub fn init(){
     let spim = &p.SPIM0;
 
     //define pins used
-    unsafe { spim.psel.sck.write(|w| w.pin().bits(config::SPI_SCLK)); }
-    unsafe { spim.psel.mosi.write(|w| w.pin().bits(config::SPI_MOSI)); }
-    unsafe { spim.psel.miso.write(|w| w.pin().bits(config::SPI_MISO)); }
+    unsafe {
+        spim.psel.sck.write(|w| w.pin().bits(config::SPI_SCLK));
+        spim.psel.mosi.write(|w| w.pin().bits(config::SPI_MOSI));
+        spim.psel.miso.write(|w| w.pin().bits(config::SPI_MISO));
+    }
 
     //define peripheral config
     spim.frequency.write(|w| w.frequency().m8());
     spim.config.write(|w| w.cpha().trailing());
     spim.config.write(|w| w.cpol().active_low());
+    spim.rxd.list.write(|w| w.list().array_list());
+    spim.txd.list.write(|w| w.list().array_list());
+
+    //define max transfer sizes
+    unsafe {
+        spim.txd.maxcnt.write(|w| w.bits(0x7F as u32));
+        spim.rxd.maxcnt.write(|w| w.bits(0x7F as u32));
+    }
 
     //configure event flag for spi tx finish (will sed read ready high)
     // spi.intenset.write(|w| w.ready().set());
     
-    //enable peripheral when finished
-    spim.enable.write(|w| w.enable().enabled());
-
     //update the state flag
     unsafe {_SPI_STATE = SpiState::Ready; }
 }
 
 #[allow(dead_code)]
-pub fn write_buffer(_src: *const [u8], _dest: *const [u8], _length: u32){
-    let p = nrf52832_pac::Peripherals::take().unwrap();
-    let _spim = &p.SPIM0;
-
+pub fn write_buffer(src: u32, length: usize){
     unsafe {
         if let SpiState::Uninitialized = _SPI_STATE {
             init();
@@ -86,11 +92,25 @@ pub fn write_buffer(_src: *const [u8], _dest: *const [u8], _length: u32){
             return;
         }
     }
+    let p = nrf52832_pac::Peripherals::take().unwrap();
+    let spim = &p.SPIM0;
 
-    //load buffer address for DMA
-    //TODO: Look at how the nrf52_pac associates registers with address values
-    //p.SPIM0.txd.ptr.write(|w| w.bits(0x0));
+    //disable peripheral for pre transfer config
+    spim.enable.write(|w| w.enable().disabled());
 
+    unsafe {
+        //load buffer address for DMA
+        spim.txd.ptr.write(|w| w.ptr().bits(src));
+        spim.rxd.ptr.write(|w| w.ptr().bits(RECEIVE_BUFFER.as_ptr() as usize as u32));
+        //update transfer size
+        spim.txd.maxcnt.write(|w| w.bits(length as u32));
+    }
+
+    //reneable for transfer
+    spim.enable.write(|w| w.enable().enabled());
+
+    //begin transfer
+    unsafe { spim.tasks_start.write(|w| w.bits(1)); }
 }
 
 

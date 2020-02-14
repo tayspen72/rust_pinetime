@@ -14,7 +14,6 @@
 // Definitions
 //=========================================================================
 
-
 //=========================================================================
 // Crates
 //=========================================================================
@@ -24,7 +23,7 @@
 // Mods
 //=========================================================================
 use crate::config;
-//use crate::CoreDrivers as core;
+use crate::CoreDrivers as core;
 use crate::mcu;
 
 
@@ -44,10 +43,25 @@ pub enum BacklightBrightness{
     Brightness7   = 0x7
 }
 
+#[repr(C)]
+pub struct Pixel{
+    red: u8,
+    green: u8,
+    blue: u8
+}
+impl Copy for Pixel {}
+impl Clone for Pixel {
+    fn clone(&self) -> Pixel {
+        *self
+    }
+}
 
+//pub const NUM_PIXELS: usize = 240*240;
 //=========================================================================
 // Variables
 //=========================================================================
+//pub static mut DISPLAY_BUFFER: [Pixel; NUM_PIXELS] = [ Pixel {red: 0, green: 0, blue: 0}; NUM_PIXELS];
+pub static mut DISPLAY_BUFFER: [Pixel; 128] = [ Pixel {red: 0, green: 0, blue: 0}; 128];
 
 
 //=========================================================================
@@ -97,18 +111,32 @@ pub fn set_backlight(val: BacklightBrightness){
         mcu::set_pin_low(config::LCD_BACKLIGHT[0]);
     }
 }
+#[allow(dead_code)]
+fn write_display_buffer()
+{
+    unsafe {
+        let src = DISPLAY_BUFFER.as_ptr() as usize;
 
-//pub fn write_display_buffer()
-//{
-//    core::spi::write_buffer(1, 2, 3);
-//}
+        core::spi::write_buffer(src as u32, 128);
+
+//        let transfer_size = core::spi::MAX_TRANSFER_SIZE;
+//        let num_transfers = NUM_PIXELS * 3 / transfer_size;
+
+
+//        for i in 0..num_transfers {
+//            core::spi::write_buffer(src as u32, transfer_size);
+//            src = src + i * transfer_size;
+//        }
+    }
+}
 
 //=========================================================================
 // TaskHandler
 //=========================================================================
-//pub fn task_handler(_p: &nrf52832_pac::Peripherals){
-//
-//}
+#[allow(dead_code)]
+pub fn task_handler(){
+    write_display_buffer();
+}
 
 
 //=========================================================================
