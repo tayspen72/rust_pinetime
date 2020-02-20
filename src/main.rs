@@ -30,8 +30,6 @@ extern crate panic_abort;
 
 use cortex_m_rt::entry;
 
-use nrf52832_pac;
-
 
 //=========================================================================
 // Mods
@@ -62,27 +60,25 @@ mod mcu;
 //=========================================================================
 #[entry]
 fn main() -> ! {
-    let per = nrf52832_pac::Peripherals::take().unwrap();
     mcu::init();
 
-    app_init(&per);
+    app_init();
 
     loop {
-        app_task_handler(&per);
+        app_task_handler();
     }
 }
 
-fn app_init(p: &nrf52832_pac::Peripherals){
-    drivers::buttons::init(p);
-    drivers::lcd::init(p);
+fn app_init(){
+    drivers::buttons::init();
 }
 
 
 //=========================================================================
 // TaskHandler
 //=========================================================================
-fn app_task_handler(p: &nrf52832_pac::Peripherals, ){
-    drivers::buttons::task_handler(p);
+fn app_task_handler(){
+    drivers::buttons::task_handler();
 }
 
 

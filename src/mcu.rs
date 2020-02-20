@@ -32,7 +32,7 @@ pub enum PinState {
 // Crates
 //=========================================================================
 use nrf52832_pac;
-//use cortex_m::Peripherals;
+// use cortex_m;
 
 
 //=========================================================================
@@ -43,12 +43,26 @@ use nrf52832_pac;
 //=========================================================================
 // Types
 //=========================================================================
+struct Peripherals{
+    P0: Option<nrf52832_pac::P0>
+}
+impl Peripherals{
+    fn take_p0(&mut self) -> nrf52832_pac::P0 {
+        let p = replace(&mut self.P0, None);
+        p.unwrap()
+    }
+}
 
 
 //=========================================================================
 // Variables
 //=========================================================================
-//static mut _PERIPHERALS: Option<nrf52832_pac::Peripherals> = None;
+static mut PERIPHERALS: Peripherals = Peripherals {
+    P0: Some(nrf52832_pac::P0),
+};
+
+// static mut PERIPHERALS: Option<::nrf52832_pac::Peripherals> = None;
+static mut CORE_PERIPHERALS: Option<::cortex_m::Peripherals> = None;
 
 
 //=========================================================================
@@ -61,17 +75,19 @@ pub fn init(){
 }
 
 #[allow(dead_code)]
-pub fn pin_setup(p: &nrf52832_pac::Peripherals, pin: u8, dir: PinDirection, state: PinState){
-    //set pin direction
-    match dir {
-        PinDirection::PinInput => {
-            p.P0.pin_cnf[pin as usize].write(|w| w.dir().input());
-            p.P0.pin_cnf[pin as usize].write(|w| w.input().connect());
-        },
+pub fn pin_setup(pin: u8, dir: PinDirection, state: PinState){
+    unsafe{
+        let p = PERIPHERALS.unwrap();
 
-        PinDirection::PinOutput => {
-            p.P0.pin_cnf[pin as usize].write(|w| w.dir().output());
-            unsafe{
+        //set pin direction
+        match dir {
+            PinDirection::PinInput => {
+                p.P0.pin_cnf[pin as usize].write(|w| w.dir().input());
+                p.P0.pin_cnf[pin as usize].write(|w| w.input().connect());
+            },
+
+            PinDirection::PinOutput => {
+                p.P0.pin_cnf[pin as usize].write(|w| w.dir().output());
                 match state {
                     PinState::PinLow => p.P0.outclr.write(|w| w.bits(1 << pin)),
                     PinState::PinHigh => p.P0.outset.write(|w| w.bits(1 << pin)),
@@ -83,29 +99,40 @@ pub fn pin_setup(p: &nrf52832_pac::Peripherals, pin: u8, dir: PinDirection, stat
 }
 
 #[allow(dead_code)]
-pub fn get_pin_state(p: &nrf52832_pac::Peripherals, pin: u8) -> PinState {
-    let bits = p.P0.in_.read().bits() & (1 << pin);
-    if bits.gt(&0) {
-        PinState::PinHigh
-    }
-    else{
-        PinState::PinLow
-    }
-}
-
-#[allow(dead_code)]
-pub fn set_pin_high(p: &nrf52832_pac::Peripherals, pin: u8) {
-    unsafe { p.P0.outset.write(|w| w.bits(1 << pin)); }
-}
-
-#[allow(dead_code)]
-pub fn set_pin_low(p: &nrf52832_pac::Peripherals, pin: u8) {
-    unsafe { p.P0.outclr.write(|w| w.bits(1 << pin)); }
-}
-
-#[allow(dead_code)]
-pub fn set_pin_state(p: &nrf52832_pac::Peripherals, pin: u8, state: PinState) {
+pub fn get_pin_state(pin: u8) -> PinState {
     unsafe {
+        let p = PERIPHERALS.unwrap();
+
+        let bits = p.P0.in_.read().bits() & (1 << pin);
+        if bits.gt(&0) {
+            PinState::PinHigh
+        } else {
+            PinState::PinLow
+        }
+    }
+}
+
+#[allow(dead_code)]
+pub fn set_pin_high(pin: u8) {
+    unsafe {
+        let p = PERIPHERALS.unwrap();
+        p.P0.outset.write(|w| w.bits(1 << pin));
+    }
+}
+
+#[allow(dead_code)]
+pub fn set_pin_low(pin: u8) {
+    unsafe {
+        let p = PERIPHERALS.unwrap();
+        p.P0.outclr.write(|w| w.bits(1 << pin));
+    }
+}
+
+#[allow(dead_code)]
+pub fn set_pin_state(pin: u8, state: PinState) {
+    unsafe {
+        let p = PERIPHERALS.unwrap();
+
         match state{
             PinState::PinLow => p.P0.outclr.write(|w| w.bits(1 << pin)),
             PinState::PinHigh => p.P0.outset.write(|w| w.bits(1 << pin)),
