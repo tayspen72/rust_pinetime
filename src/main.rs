@@ -60,6 +60,7 @@ mod mcu;
 //=========================================================================
 #[entry]
 fn main() -> ! {
+<<<<<<< Updated upstream
     mcu::init();
 
     app_init();
@@ -71,14 +72,36 @@ fn main() -> ! {
 
 fn app_init(){
     drivers::buttons::init();
+=======
+    let p = mcu::get_peripherals();
+    let cp = mcu::get_core_peripherals();
+
+    mcu::init(&cp, &p);
+
+    app_init(&cp, &p);
+
+    loop {
+        app_task_handler(&cp, &p);
+    }
+}
+
+fn app_init(_cp: &cortex_m::Peripherals, p: &nrf52832_pac::Peripherals){
+    drivers::buttons::init(&p);
+    drivers::lcd::init(&p);
+>>>>>>> Stashed changes
 }
 
 
 //=========================================================================
 // TaskHandler
 //=========================================================================
+<<<<<<< Updated upstream
 fn app_task_handler(){
     drivers::buttons::task_handler();
+=======
+fn app_task_handler(_cp: &cortex_m::Peripherals, p: &nrf52832_pac::Peripherals){
+    drivers::buttons::task_handler(&p);
+>>>>>>> Stashed changes
 }
 
 

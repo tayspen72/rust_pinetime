@@ -52,7 +52,11 @@ pub fn init() {
 //=========================================================================
 // TaskHandler
 //=========================================================================
+<<<<<<< Updated upstream
 pub fn task_handler() {
+=======
+pub fn task_handler(p: &nrf52832_pac::Peripherals, ) {
+>>>>>>> Stashed changes
     for i in 0..4 {
         match mcu::get_pin_state(config::BUTTON[i]) {
             //if low (button pressed) - set led pin low (on)

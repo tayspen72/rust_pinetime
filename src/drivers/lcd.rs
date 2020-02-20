@@ -71,7 +71,11 @@ pub fn init(p: &nrf52832_pac::Peripherals){
     //in master mode, cs is standard io. Init as output with state high
     mcu::pin_setup(config::LCD_CS, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
     //reset pin must be held high for operation
+<<<<<<< Updated upstream
     mcu::pin_setup(config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+=======
+    mcu::pin_setup(p,  config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+>>>>>>> Stashed changes
     //init lcd backlight pins
     mcu::pin_setup(config::LCD_BACKLIGHT[0], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
     mcu::pin_setup(config::LCD_BACKLIGHT[1], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
@@ -112,12 +116,12 @@ pub fn set_backlight(val: BacklightBrightness){
     }
 }
 #[allow(dead_code)]
-fn write_display_buffer()
+fn write_display_buffer(p: &nrf52832_pac::Peripherals)
 {
     unsafe {
         let src = DISPLAY_BUFFER.as_ptr() as usize;
 
-        core::spi::write_buffer(src as u32, 128);
+        core::spi::write_buffer(p, src as u32, 128);
 
 //        let transfer_size = core::spi::MAX_TRANSFER_SIZE;
 //        let num_transfers = NUM_PIXELS * 3 / transfer_size;
@@ -134,8 +138,8 @@ fn write_display_buffer()
 // TaskHandler
 //=========================================================================
 #[allow(dead_code)]
-pub fn task_handler(){
-    write_display_buffer();
+pub fn task_handler(p: &nrf52832_pac::Peripherals){
+    write_display_buffer(p);
 }
 
 

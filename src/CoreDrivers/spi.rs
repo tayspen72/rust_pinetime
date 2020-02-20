@@ -51,8 +51,7 @@ static mut _SPI_STATE: SpiState = SpiState::Uninitialized;
 //=========================================================================
 // Implementations
 //=========================================================================
-pub fn init(){
-    let p = nrf52832_pac::Peripherals::take().unwrap();
+pub fn init(p: &nrf52832_pac::Peripherals){
     let spim = &p.SPIM0;
 
     //define pins used
@@ -83,16 +82,15 @@ pub fn init(){
 }
 
 #[allow(dead_code)]
-pub fn write_buffer(src: u32, length: usize){
+pub fn write_buffer(p: &nrf52832_pac::Peripherals, src: u32, length: usize){
     unsafe {
         if let SpiState::Uninitialized = _SPI_STATE {
-            init();
+            init(p);
         }
         else if let SpiState::Busy = _SPI_STATE {
             return;
         }
     }
-    let p = nrf52832_pac::Peripherals::take().unwrap();
     let spim = &p.SPIM0;
 
     //disable peripheral for pre transfer config
