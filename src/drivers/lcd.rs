@@ -69,50 +69,46 @@ pub static mut DISPLAY_BUFFER: [Pixel; 128] = [ Pixel {red: 0, green: 0, blue: 0
 //=========================================================================
 pub fn init(p: &nrf52832_pac::Peripherals){
     //in master mode, cs is standard io. Init as output with state high
-    mcu::pin_setup(config::LCD_CS, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_setup(p, config::LCD_CS, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
     //reset pin must be held high for operation
-<<<<<<< Updated upstream
-    mcu::pin_setup(config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
-=======
     mcu::pin_setup(p,  config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
->>>>>>> Stashed changes
     //init lcd backlight pins
-    mcu::pin_setup(config::LCD_BACKLIGHT[0], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
-    mcu::pin_setup(config::LCD_BACKLIGHT[1], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
-    mcu::pin_setup(config::LCD_BACKLIGHT[2], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_setup(p, config::LCD_BACKLIGHT[0], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
+    mcu::pin_setup(p, config::LCD_BACKLIGHT[1], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
+    mcu::pin_setup(p, config::LCD_BACKLIGHT[2], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
 
-    set_backlight(BacklightBrightness::Brightness3);
+    set_backlight(p, BacklightBrightness::Brightness3);
 
     //init spi peripheral
 //    mcu::spi::init(&p);
 }
 
-pub fn set_backlight(val: BacklightBrightness){
+pub fn set_backlight(p: &nrf52832_pac::Peripherals, val: BacklightBrightness){
     let val = val as u8;
 
     //set Backlight pin 3
     if val & 0x4 > 0 {
-        mcu::set_pin_high(config::LCD_BACKLIGHT[2]);
+        mcu::set_pin_high(p, config::LCD_BACKLIGHT[2]);
     }
     else{
-        mcu::set_pin_low(config::LCD_BACKLIGHT[2]);
+        mcu::set_pin_low(p, config::LCD_BACKLIGHT[2]);
     }
 
     //set Backlight pin 2
     if val & 0x2 > 0 {
-        mcu::set_pin_high(config::LCD_BACKLIGHT[1]);
+        mcu::set_pin_high(p, config::LCD_BACKLIGHT[1]);
     }
     else{
-        mcu::set_pin_low(config::LCD_BACKLIGHT[1]);
+        mcu::set_pin_low(p, config::LCD_BACKLIGHT[1]);
     }
 
 
     //set Backlight pin 1
     if val & 0x1 > 0 {
-        mcu::set_pin_high(config::LCD_BACKLIGHT[0]);
+        mcu::set_pin_high(p, config::LCD_BACKLIGHT[0]);
     }
     else{
-        mcu::set_pin_low(config::LCD_BACKLIGHT[0]);
+        mcu::set_pin_low(p, config::LCD_BACKLIGHT[0]);
     }
 }
 #[allow(dead_code)]
