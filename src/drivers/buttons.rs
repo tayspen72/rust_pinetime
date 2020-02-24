@@ -40,7 +40,6 @@ use crate::mcu;
 // Implementations
 //=========================================================================
 pub fn init() {
-
     for i in 0..4 {
         //init buttons
         mcu::pin_setup(config::BUTTON[i], mcu::PinDirection::PinInput, mcu::PinState::NA);
@@ -52,11 +51,7 @@ pub fn init() {
 //=========================================================================
 // TaskHandler
 //=========================================================================
-<<<<<<< Updated upstream
 pub fn task_handler() {
-=======
-pub fn task_handler(p: &nrf52832_pac::Peripherals, ) {
->>>>>>> Stashed changes
     for i in 0..4 {
         match mcu::get_pin_state(config::BUTTON[i]) {
             //if low (button pressed) - set led pin low (on)
