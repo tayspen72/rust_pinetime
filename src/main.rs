@@ -62,7 +62,7 @@ mod mcu;
 fn main() -> ! {
     mcu::init();
 
-    mcu::init(cp, p);
+    app_init();
 
     loop {
         app_task_handler();
@@ -71,7 +71,6 @@ fn main() -> ! {
 
 fn app_init(){
     drivers::buttons::init();
-    drivers::lcd::init();
 }
 
 
@@ -79,6 +78,7 @@ fn app_init(){
 // TaskHandler
 //=========================================================================
 fn app_task_handler(){
+    mcu::task_handler();
     drivers::buttons::task_handler();
 }
 

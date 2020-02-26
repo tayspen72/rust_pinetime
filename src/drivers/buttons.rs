@@ -42,9 +42,9 @@ use crate::mcu;
 pub fn init() {
     for i in 0..4 {
         //init buttons
-        mcu::pin_setup(p, config::BUTTON[i], mcu::PinDirection::PinInput, mcu::PinState::NA);
+        mcu::pin_setup(config::BUTTON[i], mcu::PinDirection::PinInput, mcu::PinState::NA);
         //init corresponding LEDs
-        mcu::pin_setup(p, config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+        mcu::pin_setup(config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
     }
 }
 
@@ -52,15 +52,28 @@ pub fn init() {
 // TaskHandler
 //=========================================================================
 pub fn task_handler() {
-    for i in 0..4 {
-        match mcu::get_pin_state(p, config::BUTTON[i]) {
+    for i in 0..3 {
+        match mcu::get_pin_state(config::BUTTON[i]) {
             //if low (button pressed) - set led pin low (on)
-            mcu::PinState::PinLow => mcu::set_pin_low(p, config::LED[i]),
+            mcu::PinState::PinLow => mcu::set_pin_low(config::LED[i]),
             //if high (button not pressed) - set led pin high (off)
-            mcu::PinState::PinHigh => mcu::set_pin_high(p, config::LED[i]),
+            mcu::PinState::PinHigh => mcu::set_pin_high(config::LED[i]),
             //else, no response
             _ => (),
         };
+    }
+
+    unsafe{
+        static mut TOGGLE: bool = false;
+
+        if TOGGLE == true {
+            TOGGLE = false;
+            mcu::set_pin_high(config::LED[3]);
+        }
+        else{
+            TOGGLE == true;
+            mcu::set_pin_low(config::LED[3]);
+        }
     }
 }
 

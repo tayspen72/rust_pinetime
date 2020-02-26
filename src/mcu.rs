@@ -31,7 +31,7 @@ pub enum PinState {
 //=========================================================================
 // Crates
 //=========================================================================
-// use cortex_m;
+use cortex_m_rt::exception;
 #[allow(unused_imports)]
 use cortex_m;
 use nrf52832_pac;
@@ -52,7 +52,7 @@ use nrf52832_pac;
 //=========================================================================
 static mut PERIPHERALS: Option<&nrf52832_pac::Peripherals> = None;
 static mut CORE_PERIPHERALS: Option<&cortex_m::Peripherals> = None;
-
+static mut SYSTICK: bool = false;
 
 //=========================================================================
 // Implementations
@@ -67,6 +67,20 @@ pub fn init() {
         if let None = CORE_PERIPHERALS{
             CORE_PERIPHERALS = Some(&cortex_m::Peripherals::take().unwrap());
         }
+
+        init_systick();
+    }
+}
+
+fn init_systick(){
+    let syst = &get_core_peripherals().SYST;
+
+    unsafe {
+        syst.csr.modify(|v| v | 4);             // write clock source as core
+        syst.rvr.write(10_000_000);                  // set reload value
+        syst.cvr.write(0);                        // clear current count
+        syst.csr.modify(|v| v | 1);             // enable counter
+        syst.csr.modify(|v| v | 2);             // enable interrupt
     }
 }
 
@@ -144,12 +158,22 @@ pub fn set_pin_state(pin: u8, state: PinState) {
     }
 }
 
-
 //=========================================================================
 // TaskHandler
 //=========================================================================
+pub fn task_handler(){
+    unsafe{
+        while SYSTICK == false {
+            ();
+        }
+    }
+}
 
 
 //=========================================================================
 // Interrupt
 //=========================================================================
+#[exception]
+fn SysTick() {
+    unsafe { SYSTICK = true; }
+}
