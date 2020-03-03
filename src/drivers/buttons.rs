@@ -71,7 +71,7 @@ pub fn task_handler() {
             mcu::set_pin_high(config::LED[3]);
         }
         else{
-            TOGGLE == true;
+            TOGGLE = true;
             mcu::set_pin_low(config::LED[3]);
         }
     }
