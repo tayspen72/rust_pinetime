@@ -21,6 +21,13 @@ pub enum PinDirection {
 }
 
 #[allow(dead_code)]
+pub enum PinPullUpDown {
+    Disabled,
+    PullDown,
+    PullUp
+}
+
+#[allow(dead_code)]
 pub enum PinState {
     PinLow,
     PinHigh,
@@ -94,7 +101,7 @@ pub fn get_core_peripherals() -> &'static cortex_m::Peripherals{
 }
 
 #[allow(dead_code)]
-pub fn pin_setup(pin: u8, dir: PinDirection, state: PinState){
+pub fn pin_setup(pin: u8, dir: PinDirection, state: PinState, pull: PinPullUpDown){
     unsafe{
         let p = get_peripherals();
 
@@ -103,6 +110,12 @@ pub fn pin_setup(pin: u8, dir: PinDirection, state: PinState){
             PinDirection::PinInput => {
                 p.P0.pin_cnf[pin as usize].modify(|_, w| w.dir().input());
                 p.P0.pin_cnf[pin as usize].modify(|_, w| w.input().connect());
+                match pull{
+                    PinPullUpDown::PullDown => p.P0.pin_cnf[pin as usize].modify(|_, w| w.pull().pulldown()),
+                    PinPullUpDown::PullUp => p.P0.pin_cnf[pin as usize].modify(|_, w| w.pull().pullup()),
+                    _ => ()
+                }
+
             },
 
             PinDirection::PinOutput => {
