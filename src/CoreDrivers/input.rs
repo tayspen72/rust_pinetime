@@ -13,14 +13,12 @@
 //=========================================================================
 // Definitions
 //=========================================================================
-
+#![feature(const_fn)]
 
 //=========================================================================
 // Crates
 //=========================================================================
-#![feature(alloc)]
-extern crate alloc;
-use alloc::vec::Vec;
+
 
 //=========================================================================
 // Mods
@@ -30,21 +28,49 @@ use alloc::vec::Vec;
 //=========================================================================
 // Types
 //=========================================================================
-pub struct Input{
+pub struct InputLine{
+    state: State,
     pin: u8,
+    options: Options,
+    timestamp: u32,
+    // nextInputLine: NextInputLine
+}
+
+pub struct Options{
+    RisingEdgeOnly: u8,
+    FallingEdgeOnly: u8,
+    RealTimeCallback: u8
+}
+
+pub enum State{
+    InputUninitialized,
+    Pressed,
+    UnPressed,
+    PowerOn,
+    PowerOff,
+    PinHigh,
+    PinLow,
+    InputPaused
 }
 
 
 //=========================================================================
 // Variables
 //=========================================================================
-static mut list: Vec<Input> = Vec::new();
 
 
 //=========================================================================
 // Implementations
 //=========================================================================
-
+pub const fn InputLineCreateNew(state: State, pin: u8, options: Options, timestamp: u32, /*next: NextInputLine*/) -> InputLine {
+    InputLine {
+        state: state,
+        pin: pin,
+        options: options,
+        timestamp: timestamp,
+        // nextInputLine: next
+    }
+}
 
 //=========================================================================
 // TaskHandler

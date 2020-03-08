@@ -25,6 +25,8 @@
 //=========================================================================
 use crate::config;
 use crate::mcu;
+use crate::core;
+
 
 //=========================================================================
 // Types
@@ -34,6 +36,50 @@ use crate::mcu;
 //=========================================================================
 // Variables
 //=========================================================================
+static mut BUTTON_0: core::input::InputLine = {
+    core::input::InputLineCreateNew(
+        core::input::State::InputUninitialized,
+        config::BUTTON[0],
+        core::input::Options {
+            RisingEdgeOnly: 0,
+            FallingEdgeOnly: 0,
+            RealTimeCallback: 0
+        },
+        0)
+};
+static mut BUTTON_1: core::input::InputLine = {
+    core::input::InputLineCreateNew(
+        core::input::State::InputUninitialized,
+        config::BUTTON[1],
+        core::input::Options {
+            RisingEdgeOnly: 0,
+            FallingEdgeOnly: 0,
+            RealTimeCallback: 0
+        },
+        0)
+};
+static mut BUTTON_2: core::input::InputLine = {
+    core::input::InputLineCreateNew(
+        core::input::State::InputUninitialized,
+        config::BUTTON[2],
+        core::input::Options {
+            RisingEdgeOnly: 0,
+            FallingEdgeOnly: 0,
+            RealTimeCallback: 0
+        },
+        0)
+};
+static mut BUTTON_3: core::input::InputLine = {
+    core::input::InputLineCreateNew(
+        core::input::State::InputUninitialized,
+        config::BUTTON[3],
+        core::input::Options {
+            RisingEdgeOnly: 0,
+            FallingEdgeOnly: 0,
+            RealTimeCallback: 0
+        },
+        0)
+};
 
 
 //=========================================================================
