@@ -41,58 +41,60 @@ static mut BUTTON_0: core::input::InputLine = {
         core::input::State::InputUninitialized,
         config::BUTTON[0],
         core::input::Options {
-            RisingEdgeOnly: 0,
-            FallingEdgeOnly: 0,
+            EdgeTrigger: core::input::EdgeOptions::FallingEdge,
+            Pull: core::input::PullOptions::PullUp,
             RealTimeCallback: 0
         },
         0)
 };
-static mut BUTTON_1: core::input::InputLine = {
-    core::input::InputLineCreateNew(
-        core::input::State::InputUninitialized,
-        config::BUTTON[1],
-        core::input::Options {
-            RisingEdgeOnly: 0,
-            FallingEdgeOnly: 0,
-            RealTimeCallback: 0
-        },
-        0)
-};
-static mut BUTTON_2: core::input::InputLine = {
-    core::input::InputLineCreateNew(
-        core::input::State::InputUninitialized,
-        config::BUTTON[2],
-        core::input::Options {
-            RisingEdgeOnly: 0,
-            FallingEdgeOnly: 0,
-            RealTimeCallback: 0
-        },
-        0)
-};
-static mut BUTTON_3: core::input::InputLine = {
-    core::input::InputLineCreateNew(
-        core::input::State::InputUninitialized,
-        config::BUTTON[3],
-        core::input::Options {
-            RisingEdgeOnly: 0,
-            FallingEdgeOnly: 0,
-            RealTimeCallback: 0
-        },
-        0)
-};
+// static mut BUTTON_1: core::input::InputLine = {
+//     core::input::InputLineCreateNew(
+//         core::input::State::InputUninitialized,
+//         config::BUTTON[1],
+//         core::input::Options {
+//             RisingEdgeOnly: 0,
+//             FallingEdgeOnly: 0,
+//             RealTimeCallback: 0
+//         },
+//         0)
+// };
+// static mut BUTTON_2: core::input::InputLine = {
+//     core::input::InputLineCreateNew(
+//         core::input::State::InputUninitialized,
+//         config::BUTTON[2],
+//         core::input::Options {
+//             RisingEdgeOnly: 0,
+//             FallingEdgeOnly: 0,
+//             RealTimeCallback: 0
+//         },
+//         0)
+// };
+// static mut BUTTON_3: core::input::InputLine = {
+//     core::input::InputLineCreateNew(
+//         core::input::State::InputUninitialized,
+//         config::BUTTON[3],
+//         core::input::Options {
+//             RisingEdgeOnly: 0,
+//             FallingEdgeOnly: 0,
+//             RealTimeCallback: 0
+//         },
+//         0)
+// };
 
 
 //=========================================================================
 // Implementations
 //=========================================================================
 pub fn init(p: &nrf52832_pac::Peripherals) {
+    unsafe { core::input::init(&BUTTON_0); }
 
-    for i in 0..4 {
-        //init buttons
-        mcu::pin_setup(p, config::BUTTON[i], mcu::PinDirection::PinInput, mcu::PinState::NA);
-        //init corresponding LEDs
-        mcu::pin_setup(p, config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
-    }
+    // for i in 0..4 {
+    //     //init buttons
+    //
+    //     mcu::pin_setup(p, config::BUTTON[i], mcu::PinDirection::PinInput, mcu::PinState::NA);
+    //     //init corresponding LEDs
+    //     mcu::pin_setup(p, config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    // }
 }
 
 //=========================================================================
