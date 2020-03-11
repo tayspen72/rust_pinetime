@@ -85,6 +85,7 @@ static mut BUTTON_0: core::input::InputLine = {
 //=========================================================================
 // Implementations
 //=========================================================================
+<<<<<<< HEAD
 pub fn init(p: &nrf52832_pac::Peripherals) {
     unsafe { core::input::init(&BUTTON_0); }
 
@@ -95,18 +96,27 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
     //     //init corresponding LEDs
     //     mcu::pin_setup(p, config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
     // }
+=======
+pub fn init() {
+    for i in 0..=3 {
+        //init buttons
+        mcu::pin_setup(config::BUTTON[i], mcu::PinDirection::PinInput, mcu::PinState::NA, mcu::PinPullUpDown::PullUp);
+        //init corresponding LEDs
+        mcu::pin_setup(config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh, mcu::PinPullUpDown::Disabled);
+    }
+>>>>>>> tsp_globalPeripherals
 }
 
 //=========================================================================
 // TaskHandler
 //=========================================================================
-pub fn task_handler(p: &nrf52832_pac::Peripherals, ) {
-    for i in 0..4 {
-        match mcu::get_pin_state(p, config::BUTTON[i]) {
+pub fn task_handler() {
+    for i in 0..=3 {
+        match mcu::get_pin_state(config::BUTTON[i]) {
             //if low (button pressed) - set led pin low (on)
-            mcu::PinState::PinLow => mcu::set_pin_low(p, config::LED[i]),
+            mcu::PinState::PinLow => mcu::set_pin_low(config::LED[i]),
             //if high (button not pressed) - set led pin high (off)
-            mcu::PinState::PinHigh => mcu::set_pin_high(p, config::LED[i]),
+            mcu::PinState::PinHigh => mcu::set_pin_high(config::LED[i]),
             //else, no response
             _ => (),
         };
@@ -116,4 +126,3 @@ pub fn task_handler(p: &nrf52832_pac::Peripherals, ) {
 //=========================================================================
 // Interrupt
 //=========================================================================
-
