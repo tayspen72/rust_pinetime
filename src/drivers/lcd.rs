@@ -67,57 +67,57 @@ pub static mut DISPLAY_BUFFER: [Pixel; 128] = [ Pixel {red: 0, green: 0, blue: 0
 //=========================================================================
 // Implementations
 //=========================================================================
-pub fn init(p: &nrf52832_pac::Peripherals){
+pub fn init(){
     //in master mode, cs is standard io. Init as output with state high
-    mcu::pin_setup(p, config::LCD_CS, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_CS, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh, mcu::PinPull::None);
     //reset pin must be held high for operation
-    mcu::pin_setup(p,  config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh, mcu::PinPull::None);
     //init lcd backlight pins
-    mcu::pin_setup(p, config::LCD_BACKLIGHT[0], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
-    mcu::pin_setup(p, config::LCD_BACKLIGHT[1], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
-    mcu::pin_setup(p, config::LCD_BACKLIGHT[2], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_BACKLIGHT[0], mcu::PinDirection::PinOutput, mcu::PinState::PinLow, mcu::PinPull::None);
+    mcu::pin_setup(config::LCD_BACKLIGHT[1], mcu::PinDirection::PinOutput, mcu::PinState::PinLow, mcu::PinPull::None);
+    mcu::pin_setup(config::LCD_BACKLIGHT[2], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh, mcu::PinPull::None);
 
-    set_backlight(p, BacklightBrightness::Brightness3);
+    set_backlight(BacklightBrightness::Brightness3);
 
     //init spi peripheral
 //    mcu::spi::init(&p);
 }
 
-pub fn set_backlight(p: &nrf52832_pac::Peripherals, val: BacklightBrightness){
+pub fn set_backlight(val: BacklightBrightness){
     let val = val as u8;
 
     //set Backlight pin 3
     if val & 0x4 > 0 {
-        mcu::set_pin_high(p, config::LCD_BACKLIGHT[2]);
+        mcu::set_pin_high(config::LCD_BACKLIGHT[2]);
     }
     else{
-        mcu::set_pin_low(p, config::LCD_BACKLIGHT[2]);
+        mcu::set_pin_low(config::LCD_BACKLIGHT[2]);
     }
 
     //set Backlight pin 2
     if val & 0x2 > 0 {
-        mcu::set_pin_high(p, config::LCD_BACKLIGHT[1]);
+        mcu::set_pin_high(config::LCD_BACKLIGHT[1]);
     }
     else{
-        mcu::set_pin_low(p, config::LCD_BACKLIGHT[1]);
+        mcu::set_pin_low(config::LCD_BACKLIGHT[1]);
     }
 
 
     //set Backlight pin 1
     if val & 0x1 > 0 {
-        mcu::set_pin_high(p, config::LCD_BACKLIGHT[0]);
+        mcu::set_pin_high(config::LCD_BACKLIGHT[0]);
     }
     else{
-        mcu::set_pin_low(p, config::LCD_BACKLIGHT[0]);
+        mcu::set_pin_low(config::LCD_BACKLIGHT[0]);
     }
 }
 #[allow(dead_code)]
-fn write_display_buffer(p: &nrf52832_pac::Peripherals)
+fn write_display_buffer()
 {
     unsafe {
         let src = DISPLAY_BUFFER.as_ptr() as usize;
 
-        core::spi::write_buffer(p, src as u32, 128);
+        core::spi::write_buffer(src as u32, 128);
 
 //        let transfer_size = core::spi::MAX_TRANSFER_SIZE;
 //        let num_transfers = NUM_PIXELS * 3 / transfer_size;
@@ -134,8 +134,8 @@ fn write_display_buffer(p: &nrf52832_pac::Peripherals)
 // TaskHandler
 //=========================================================================
 #[allow(dead_code)]
-pub fn task_handler(p: &nrf52832_pac::Peripherals){
-    write_display_buffer(p);
+pub fn task_handler(){
+    write_display_buffer();
 }
 
 

@@ -19,7 +19,7 @@
 // Crates
 //=========================================================================
 use crate::config;
-//use crate::mcu;
+use crate::mcu;
 use nrf52832_pac;
 use core::f32::MAX;
 
@@ -51,7 +51,8 @@ static mut _SPI_STATE: SpiState = SpiState::Uninitialized;
 //=========================================================================
 // Implementations
 //=========================================================================
-pub fn init(p: &nrf52832_pac::Peripherals){
+pub fn init(){
+    let p = mcu::get_peripherals();
     let spim = &p.SPIM0;
 
     //define pins used
@@ -82,10 +83,12 @@ pub fn init(p: &nrf52832_pac::Peripherals){
 }
 
 #[allow(dead_code)]
-pub fn write_buffer(p: &nrf52832_pac::Peripherals, src: u32, length: usize){
+pub fn write_buffer(src: u32, length: usize){
+    let p = mcu::get_peripherals();
+    
     unsafe {
         if let SpiState::Uninitialized = _SPI_STATE {
-            init(p);
+            init();
         }
         else if let SpiState::Busy = _SPI_STATE {
             return;

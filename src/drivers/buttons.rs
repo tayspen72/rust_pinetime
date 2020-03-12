@@ -85,7 +85,7 @@ static mut BUTTON_0: core::input::InputLine = {
 //=========================================================================
 // Implementations
 //=========================================================================
-pub fn init(p: &nrf52832_pac::Peripherals) {
+pub fn init() {
     unsafe { core::input::init(&BUTTON_0); }
 
     // for i in 0..4 {
@@ -100,13 +100,13 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
 //=========================================================================
 // TaskHandler
 //=========================================================================
-pub fn task_handler(p: &nrf52832_pac::Peripherals, ) {
+pub fn task_handler() {
     for i in 0..4 {
-        match mcu::get_pin_state(p, config::BUTTON[i]) {
+        match mcu::get_pin_state(config::BUTTON[i]) {
             //if low (button pressed) - set led pin low (on)
-            mcu::PinState::PinLow => mcu::set_pin_low(p, config::LED[i]),
+            mcu::PinState::PinLow => mcu::set_pin_low(config::LED[i]),
             //if high (button not pressed) - set led pin high (off)
-            mcu::PinState::PinHigh => mcu::set_pin_high(p, config::LED[i]),
+            mcu::PinState::PinHigh => mcu::set_pin_high(config::LED[i]),
             //else, no response
             _ => (),
         };

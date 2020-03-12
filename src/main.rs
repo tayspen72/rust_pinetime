@@ -27,8 +27,7 @@ extern crate panic_halt;
 // release profile: minimize the binary size of the application
 #[cfg(not(debug_assertions))]
 extern crate panic_abort;
-
-use cortex_m_rt::entry;
+use cortex_m_rt::{entry};
 
 
 //=========================================================================
@@ -60,29 +59,26 @@ mod mcu;
 //=========================================================================
 #[entry]
 fn main() -> ! {
-    let cp = &mcu::get_core_peripherals();
-    let p = &mcu::get_peripherals();
+    mcu::init();
 
-    mcu::init(cp, p);
-
-    app_init(cp, p);
+    app_init();
 
     loop {
-        app_task_handler(cp, p);
+        app_task_handler();
     }
 }
 
-fn app_init(_cp: &cortex_m::Peripherals, p: &nrf52832_pac::Peripherals){
-    drivers::buttons::init(p);
-    drivers::lcd::init(p);
+fn app_init(){
+    drivers::buttons::init();
+    // drivers::lcd::init();
 }
 
 
 //=========================================================================
 // TaskHandler
 //=========================================================================
-fn app_task_handler(_cp: &cortex_m::Peripherals, p: &nrf52832_pac::Peripherals){
-    drivers::buttons::task_handler(p);
+fn app_task_handler(){
+    drivers::buttons::task_handler();
 }
 
 

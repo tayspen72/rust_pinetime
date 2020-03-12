@@ -20,7 +20,8 @@
 //=========================================================================
 use crate::config;
 use crate::mcu;
-use nrf52832_pac;
+extern crate nrf52832_pac;
+
 
 
 //=========================================================================
@@ -60,10 +61,6 @@ pub enum PullOptions{
 
 pub enum State{
     InputUninitialized,
-    Pressed,
-    UnPressed,
-    PowerOn,
-    PowerOff,
     PinHigh,
     PinLow,
     InputPaused
