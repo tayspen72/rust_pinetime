@@ -85,8 +85,7 @@ static mut BUTTON_0: core::input::InputLine = {
 //=========================================================================
 // Implementations
 //=========================================================================
-<<<<<<< HEAD
-pub fn init(p: &nrf52832_pac::Peripherals) {
+pub fn init() {
     unsafe { core::input::init(&BUTTON_0); }
 
     // for i in 0..4 {
@@ -96,15 +95,6 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
     //     //init corresponding LEDs
     //     mcu::pin_setup(p, config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
     // }
-=======
-pub fn init() {
-    for i in 0..=3 {
-        //init buttons
-        mcu::pin_setup(config::BUTTON[i], mcu::PinDirection::PinInput, mcu::PinState::NA, mcu::PinPullUpDown::PullUp);
-        //init corresponding LEDs
-        mcu::pin_setup(config::LED[i], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh, mcu::PinPullUpDown::Disabled);
-    }
->>>>>>> tsp_globalPeripherals
 }
 
 //=========================================================================

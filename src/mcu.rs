@@ -57,8 +57,8 @@ use nrf52832_pac;
 //=========================================================================
 // Variables
 //=========================================================================
-static mut PERIPHERALS: Option<&nrf52832_pac::Peripherals> = None;
-static mut CORE_PERIPHERALS: Option<&cortex_m::Peripherals> = None;
+static mut PERIPHERALS: Option<nrf52832_pac::Peripherals> = None;
+static mut CORE_PERIPHERALS: Option<cortex_m::Peripherals> = None;
 static mut SYSTICK: bool = false;
 
 //=========================================================================
@@ -68,11 +68,11 @@ static mut SYSTICK: bool = false;
 pub fn init() {
     unsafe {
         if let None = PERIPHERALS{
-            PERIPHERALS = Some(&nrf52832_pac::Peripherals::take().unwrap());
+            PERIPHERALS = Some(nrf52832_pac::Peripherals::take().unwrap());
         }
 
         if let None = CORE_PERIPHERALS{
-            CORE_PERIPHERALS = Some(&cortex_m::Peripherals::take().unwrap());
+            CORE_PERIPHERALS = Some(cortex_m::Peripherals::take().unwrap());
         }
 
         init_systick();
@@ -92,12 +92,12 @@ fn init_systick(){
 }
 
 pub fn get_peripherals() -> &'static nrf52832_pac::Peripherals{
-    unsafe { PERIPHERALS.unwrap() }
+    unsafe { &PERIPHERALS.unwrap() }
 }
 
 #[allow(dead_code)]
 pub fn get_core_peripherals() -> &'static cortex_m::Peripherals{
-    unsafe { CORE_PERIPHERALS.unwrap() }
+    unsafe { &CORE_PERIPHERALS.unwrap() }
 }
 
 #[allow(dead_code)]
