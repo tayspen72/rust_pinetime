@@ -75,7 +75,7 @@ pub fn init(){
 
     //configure event flag for spi tx finish (will sed read ready high)
     // spi.intenset.write(|w| w.ready().set());
-    
+
     //update the state flag
     unsafe {_SPI_STATE = SpiState::Ready; }
 }
@@ -122,4 +122,3 @@ pub fn write_buffer(src: u32, length: usize){
 //=========================================================================
 // Interrupt
 //=========================================================================
-

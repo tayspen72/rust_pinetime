@@ -34,6 +34,13 @@ pub enum PinState {
     NA
 }
 
+#[allow(dead_code)]
+pub enum PinPull {
+    None,
+    PullDown,
+    PullUp
+}
+
 
 //=========================================================================
 // Crates

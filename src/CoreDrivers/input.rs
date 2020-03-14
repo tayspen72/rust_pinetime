@@ -63,10 +63,6 @@ pub enum PullOptions{
 
 pub enum State{
     InputUninitialized,
-    Pressed,
-    UnPressed,
-    PowerOn,
-    PowerOff,
     PinHigh,
     PinLow,
     InputPaused

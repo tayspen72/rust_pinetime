@@ -71,13 +71,13 @@ pub static mut DISPLAY_BUFFER: [Pixel; 128] = [ Pixel {red: 0, green: 0, blue: 0
 //=========================================================================
 pub fn init(){
     //in master mode, cs is standard io. Init as output with state high
-    mcu::pin_setup(config::LCD_CS, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_CS, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh, mcu::PinPull::None);
     //reset pin must be held high for operation
-    mcu::pin_setup(config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_RESET, mcu::PinDirection::PinOutput, mcu::PinState::PinHigh, mcu::PinPull::None);
     //init lcd backlight pins
-    mcu::pin_setup(config::LCD_BACKLIGHT[0], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
-    mcu::pin_setup(config::LCD_BACKLIGHT[1], mcu::PinDirection::PinOutput, mcu::PinState::PinLow);
-    mcu::pin_setup(config::LCD_BACKLIGHT[2], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh);
+    mcu::pin_setup(config::LCD_BACKLIGHT[0], mcu::PinDirection::PinOutput, mcu::PinState::PinLow, mcu::PinPull::None);
+    mcu::pin_setup(config::LCD_BACKLIGHT[1], mcu::PinDirection::PinOutput, mcu::PinState::PinLow, mcu::PinPull::None);
+    mcu::pin_setup(config::LCD_BACKLIGHT[2], mcu::PinDirection::PinOutput, mcu::PinState::PinHigh, mcu::PinPull::None);
 
     set_backlight(BacklightBrightness::Brightness3);
 

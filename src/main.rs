@@ -27,8 +27,7 @@ extern crate panic_halt;
 // release profile: minimize the binary size of the application
 #[cfg(not(debug_assertions))]
 extern crate panic_abort;
-
-use cortex_m_rt::entry;
+use cortex_m_rt::{entry};
 
 
 //=========================================================================
