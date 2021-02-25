@@ -1,20 +1,18 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// drivers::mod.rs
+// drivers::debug.rs
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-pub mod button;
-pub mod debug;
-pub mod lcd;
-pub mod touch;
+use crate::config;
+use crate::mcu::uart;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-
+#[allow(dead_code)]
 
 //==============================================================================
 // Macros
@@ -24,12 +22,42 @@ pub mod touch;
 //==============================================================================
 // Variables
 //==============================================================================
-
+ 
 
 //==============================================================================
 // Implementations
 //==============================================================================
+#[allow(dead_code)]
+pub fn init(p: &nrf52832_pac::Peripherals) {
+	let line = get_uartline();
+	
+	uart::init(p, &line);
 
+	debug_write_string(p, "*************************");
+	debug_write_string(p, "*  Debugger Initialied  *");
+	debug_write_string(p, "*************************");
+}
+
+pub fn debug_write_string(p: &nrf52832_pac::Peripherals, string: &str) {
+	let bytes = string.as_bytes();
+	for i in 0..string.len() {
+		uart::tx(p, bytes[i]);
+	}
+}
+
+fn get_uartline() -> &'static uart::UartLine {
+	static UARTLINE: uart::UartLine = uart::UartLine {
+		cts_pin: config::UART_CTS_PIN,
+		rts_pin: config::UART_RTS_PIN,
+		rx_pin: config::UART_RX_PIN,
+		tx_pin: config::UART_TX_PIN,
+		baud: config::UART_BAUD,
+		parity: config::UART_PARITY,
+		echo_enabled: config::UART_ECHO
+	};
+	
+	&UARTLINE
+}
 
 //==============================================================================
 // Interrupt Handler
@@ -39,3 +67,6 @@ pub mod touch;
 //==============================================================================
 // Task Handler
 //==============================================================================
+pub fn task_handler() {
+	uart::task_handler();
+}

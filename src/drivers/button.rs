@@ -1,15 +1,14 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// drivers::mod.rs
+// drivers::button.rs
+// Wrapper around the gpio pins for handling button presses
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-pub mod button;
-pub mod debug;
-pub mod lcd;
-pub mod touch;
+use crate::config;
+use crate::mcu::gpio;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -29,7 +28,15 @@ pub mod touch;
 //==============================================================================
 // Implementations
 //==============================================================================
-
+pub fn init(p: &nrf52832_pac::Peripherals) {
+	gpio::pin_setup(
+		p, 
+		config::PUSH_BUTTON_PIN,
+		nrf52832_pac::p0::pin_cnf::DIR_A::INPUT,
+		nrf52832_pac::p0::pin_cnf::PULL_A::PULLUP,
+		gpio::PinState::PinLow
+	);
+}
 
 //==============================================================================
 // Interrupt Handler
