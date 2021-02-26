@@ -1,6 +1,6 @@
-# `nRF52832 Device Drivers using Dev Board`
+# `PineTime App In Rust`
 
-> A quickstart to using the nrf52832 device on the development board
+> This project was intended to be a starter project to learn the Rust programming language
  
  ## VS Code Requirements
  * 
