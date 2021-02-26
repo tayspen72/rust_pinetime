@@ -1,22 +1,13 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// main.rs
+// drivers::lcd.rs
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-#![no_std]
-#![no_main]
-
-use cortex_m_rt::entry;
-use nrf52832_pac;
-use panic_halt as _; // Breakpoint on `rust_begin_unwind` to catch panics
-
-mod config;
-mod drivers;
-use drivers::*;
-mod mcu;
+use crate::config;
+use crate::mcu::spi;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -36,22 +27,23 @@ mod mcu;
 //==============================================================================
 // Implementations
 //==============================================================================
-#[entry]
-fn main() -> ! {
-	let peripherals = nrf52832_pac::Peripherals::take().unwrap();
-
-	app_init(&peripherals);
-	
-	loop {
-		app_task_handler(&peripherals);
-	};
+pub fn init(p: &nrf52832_pac::Peripherals) {
+	spi::init(p, get_spiline()); 
 }
 
-fn app_init(p: &nrf52832_pac::Peripherals) {
-	debug::init(p);
-	button::init(p);
-	touch::init(p);
-	lcd::init(p);
+pub fn get_spiline() -> &'static spi::SpiLine {
+	static SPI_LINE: spi::SpiLine = spi::SpiLine {
+		sclk_pin: config::SPI_SCLK_PIN,
+		sel_pin: config::SPI_SEL_PIN,
+		mosi_pin: config::SPI_MOSI_PIN,
+		miso_pin: config::SPI_MISO_PIN,
+		frequency: config::SPI_FREQUENCY,
+		order: config::SPI_ORDER,
+		cpha: config::SPI_CPHA,
+		cpol: config::SPI_CPOL,
+	};
+
+	&SPI_LINE
 }
 
 //==============================================================================
@@ -62,9 +54,6 @@ fn app_init(p: &nrf52832_pac::Peripherals) {
 //==============================================================================
 // Task Handler
 //==============================================================================
-// TODO: This will be developed into passing around some device flags structure to handle changes as needed
-fn app_task_handler(_p: &nrf52832_pac::Peripherals) {
-	debug::task_handler();
-	lcd::task_handler();
-	touch::task_handler();
+pub fn task_handler() {
+
 }

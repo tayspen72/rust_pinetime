@@ -28,13 +28,6 @@ pub const I2C_SDA_PIN: u8 = 0; //TODO: Get the right pin
 pub const I2C_FREQUENCY: twi0::frequency::FREQUENCY_A = twi0::frequency::FREQUENCY_A::K400;
 pub const I2C_ADDRESS: u8 = 0; //TODO: Get the right pin
 
-pub const LCD_BACKLIGHT_LOW: u8 = 14;
-pub const LCD_DCX_PIN: u8 = 18;
-pub const LCD_BACKLIGHT_MID: u8 = 22;
-pub const LCD_BACKLIGHT_HIGH: u8 = 23;
-pub const LCD_CS_PIN: u8 = 25;
-pub const LCD_RESET_PIN: u8 = 26;
-
 pub const SPI_SCLK_PIN: u8 = 11;
 pub const SPI_SEL_PIN: u8 = 12;
 pub const SPI_MOSI_PIN: u8 = 13;
