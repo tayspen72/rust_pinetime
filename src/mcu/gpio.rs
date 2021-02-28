@@ -9,6 +9,9 @@
 //==============================================================================
 use nrf52832_pac;
 
+use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
+use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
+
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
@@ -63,10 +66,10 @@ pub fn pin_disable(p: &nrf52832_pac::Peripherals, pin: u8) {
 }
 
 #[allow(dead_code)]
-pub fn pin_setup(p: &nrf52832_pac::Peripherals, pin: u8, dir: nrf52832_pac::p0::pin_cnf::DIR_A, pull: nrf52832_pac::p0::pin_cnf::PULL_A, state: PinState){
+pub fn pin_setup(p: &nrf52832_pac::Peripherals, pin: u8, dir: DIR, state: PinState, pull: PULL){
 		// Set direction
 	p.P0.pin_cnf[pin as usize].modify(|_, w| w.dir().variant(dir));
-	if let nrf52832_pac::p0::pin_cnf::DIR_A::INPUT = dir {
+	if let DIR::INPUT = dir {
 		p.P0.pin_cnf[pin as usize].modify(|_, w| w.input().connect());
 	}
 	else {
