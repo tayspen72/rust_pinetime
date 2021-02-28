@@ -6,8 +6,8 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use crate::config;
-use crate::mcu::uart;
+// use crate::config;
+// use crate::mcu::uart;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -28,36 +28,36 @@ use crate::mcu::uart;
 // Implementations
 //==============================================================================
 #[allow(dead_code)]
-pub fn init(p: &nrf52832_pac::Peripherals) {
-	let line = get_uartline();
+pub fn init(_p: &nrf52832_pac::Peripherals) {}
+// 	let line = get_uartline();
 	
-	uart::init(p, &line);
+// 	uart::init(p, &line);
 
-	debug_write_string(p, "*************************");
-	debug_write_string(p, "*  Debugger Initialied  *");
-	debug_write_string(p, "*************************");
-}
+// 	debug_write_string(p, "*************************");
+// 	debug_write_string(p, "*  Debugger Initialied  *");
+// 	debug_write_string(p, "*************************");
+// }
 
-pub fn debug_write_string(p: &nrf52832_pac::Peripherals, string: &str) {
-	let bytes = string.as_bytes();
-	for i in 0..string.len() {
-		uart::tx(p, bytes[i]);
-	}
-}
+// pub fn debug_write_string(p: &nrf52832_pac::Peripherals, string: &str) {
+// 	let bytes = string.as_bytes();
+// 	for i in 0..string.len() {
+// 		uart::tx(p, bytes[i]);
+// 	}
+// }
 
-fn get_uartline() -> &'static uart::UartLine {
-	static UARTLINE: uart::UartLine = uart::UartLine {
-		cts_pin: config::UART_CTS_PIN,
-		rts_pin: config::UART_RTS_PIN,
-		rx_pin: config::UART_RX_PIN,
-		tx_pin: config::UART_TX_PIN,
-		baud: config::UART_BAUD,
-		parity: config::UART_PARITY,
-		echo_enabled: config::UART_ECHO
-	};
+// fn get_uartline() -> &'static uart::UartLine {
+// 	static UARTLINE: uart::UartLine = uart::UartLine {
+// 		cts_pin: config::UART_CTS_PIN,
+// 		rts_pin: config::UART_RTS_PIN,
+// 		rx_pin: config::UART_RX_PIN,
+// 		tx_pin: config::UART_TX_PIN,
+// 		baud: config::UART_BAUD,
+// 		parity: config::UART_PARITY,
+// 		echo_enabled: config::UART_ECHO
+// 	};
 	
-	&UARTLINE
-}
+// 	&UARTLINE
+// }
 
 //==============================================================================
 // Interrupt Handler
@@ -67,6 +67,6 @@ fn get_uartline() -> &'static uart::UartLine {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler() {
-	uart::task_handler();
-}
+// pub fn task_handler() {
+// 	uart::task_handler();
+// }

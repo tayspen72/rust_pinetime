@@ -7,21 +7,21 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use nrf52832_pac;
-use crate::mcu::gpio;
+// use nrf52832_pac;
+// use crate::mcu::gpio;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-#[derive(Copy, Clone)]
-pub struct Input {
-	pub pin: u8,
-	pub state: gpio::PinState,
-	pub pull: gpio::PinPull,
-	pub callback: Callback,
-}
+// #[derive(Copy, Clone)]
+// pub struct Input {
+// 	pub pin: u8,
+// 	pub state: gpio::PinState,
+// 	pub pull: gpio::PinPull,
+// 	pub callback: Callback,
+// }
 
-type Callback = fn(Input);
+// type Callback = fn(Input);
 
 //==============================================================================
 // Macros
@@ -46,12 +46,11 @@ type Callback = fn(Input);
 //==============================================================================
 // Implementations
 //==============================================================================
-#[allow(dead_code)]
-pub fn init(p: &nrf52832_pac::Peripherals, input: &Input) {
-	gpio::pin_setup(p, input.pin, nrf52832_pac::p0::pin_cnf::DIR_A::INPUT, nrf52832_pac::p0::pin_cnf::PULL_A::PULLUP, gpio::PinState::PinLow);
-}
-
-//==============================================================================
+// #[allow(dead_code)]
+// pub fn init(p: &nrf52832_pac::Peripherals, input: &Input) {
+// 	// gpio::pin_setup(p, input.pin, nrf52832_pac::p0::pin_cnf::DIR_A::INPUT, nrf52832_pac::p0::pin_cnf::PULL_A::PULLUP, gpio::PinState::PinLow);
+// } nrf52832_pac;
+// use========================================================
 // Interrupt Handler
 //==============================================================================
 
