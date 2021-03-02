@@ -48,10 +48,11 @@ fn main() -> ! {
 }
 
 fn app_init(p: &nrf52832_pac::Peripherals) {
+	lcd::lcd_api::init(p);
 	debug::init(p);
+	
 	button::init(p);
 	touch::init(p);
-	lcd::lcd_api::init(p);
 }
 
 //==============================================================================
