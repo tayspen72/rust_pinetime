@@ -16,7 +16,7 @@
 //From page 156 of datasheet
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
-pub enum COMMAND_A { 
+pub enum COMMAND { 
 	SW_RESET							= 0x01,
 	SLEEP_IN							= 0x10,	/* Enter minimum power consumption mode */
 	SLEEP_OUT							= 0x11,	/* Exit minimum power consumption mode */

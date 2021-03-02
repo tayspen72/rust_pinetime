@@ -59,7 +59,7 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
 	gpio::pin_setup(p, config::LCD_BACKLIGHT_LOW, DIR::OUTPUT, gpio::PinState::PinHigh, PULL::DISABLED);
 	gpio::pin_setup(p, config::LCD_BACKLIGHT_MID, DIR::OUTPUT, gpio::PinState::PinHigh, PULL::DISABLED);
 	gpio::pin_setup(p, config::LCD_BACKLIGHT_HIGH, DIR::OUTPUT, gpio::PinState::PinHigh, PULL::DISABLED);
-	set_backlight(p, BacklightBrightness::Brightness4);
+	set_backlight(p, BacklightBrightness::Brightness0);
 
 	unsafe { _INTIIALIZED = true; }
 }
@@ -81,7 +81,7 @@ pub fn set_backlight(p: &nrf52832_pac::Peripherals, backlight: BacklightBrightne
 	gpio::set_pin_state(p, config::LCD_BACKLIGHT_HIGH, states[2]);
 }
 
-pub fn write_command(p: &nrf52832_pac::Peripherals, command: st7789::COMMAND_A) {
+pub fn write_command(p: &nrf52832_pac::Peripherals, command: st7789::COMMAND) {
 	gpio::set_pin_state(p, config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(p, config::LCD_DCX_PIN, gpio::PinState::PinLow);
 
@@ -110,65 +110,65 @@ fn configure(p: &nrf52832_pac::Peripherals) {
 	timer::delay(p, 150);
 
 	// Also initiate a software reset - just to be safe
-	write_command(p, st7789::COMMAND_A::SW_RESET);
+	write_command(p, st7789::COMMAND::SW_RESET);
 	timer::delay(p, 150);
 
 	// Exit sleep
-	write_command(p, st7789::COMMAND_A::SLEEP_OUT);
+	write_command(p, st7789::COMMAND::SLEEP_OUT);
 	timer::delay(p, 150);
 
-	write_command(p, st7789::COMMAND_A::NORMAL_MODE);
+	write_command(p, st7789::COMMAND::NORMAL_MODE);
 	
 	// Write memory data format: 
 	//  RGB, left to right, top to bottom, logical direction of memory pointer updates
-	write_command(p, st7789::COMMAND_A::MEMORY_DATA_ACCESS_CONTROL);
+	write_command(p, st7789::COMMAND::MEMORY_DATA_ACCESS_CONTROL);
 	write_data(p, &[ 0x08 ]);
 
 	// Define pixel interfacing format:
 	//  5-6-5 for 65k color options
-	write_command(p, st7789::COMMAND_A::INTERFACE_PIXEL_FORMAT);
+	write_command(p, st7789::COMMAND::INTERFACE_PIXEL_FORMAT);
 	write_data(p, &[ 0x55 ]);
 	timer::delay(p, 10);
 
-	write_command(p, st7789::COMMAND_A::PORCH_SETTING);
+	write_command(p, st7789::COMMAND::PORCH_SETTING);
 	write_data(p, &[ 0x0c, 0x0c, 0x00, 0x33, 0x33 ]);
 
-	write_command(p, st7789::COMMAND_A::GATE_CONTROL);
+	write_command(p, st7789::COMMAND::GATE_CONTROL);
 	write_data(p, &[ 0x35 ]);
 
-	write_command(p, st7789::COMMAND_A::GATE_ON_TIMING_ADJUSTMENT);
+	write_command(p, st7789::COMMAND::GATE_ON_TIMING_ADJUSTMENT);
 	write_data(p, &[ 0x28 ]);
 
-	write_command(p, st7789::COMMAND_A::LCM_CONTROL);
+	write_command(p, st7789::COMMAND::LCM_CONTROL);
 	write_data(p, &[ 0x0C ]);
 
-	write_command(p, st7789::COMMAND_A::VDV_VRH_CMD_ENABLE);
+	write_command(p, st7789::COMMAND::VDV_VRH_CMD_ENABLE);
 	write_data(p, &[ 0x01, 0xFF ]);
 
-	write_command(p, st7789::COMMAND_A::VRH_SET);
+	write_command(p, st7789::COMMAND::VRH_SET);
 	write_data(p, &[ 0x01 ]);
 
-	write_command(p, st7789::COMMAND_A::VDV_SET);
+	write_command(p, st7789::COMMAND::VDV_SET);
 	write_data(p, &[ 0x20 ]);
 
-	write_command(p, st7789::COMMAND_A::FRAME_RATE_CONTROL_2);
+	write_command(p, st7789::COMMAND::FRAME_RATE_CONTROL_2);
 	write_data(p, &[ 0x0F ]);
 
-	write_command(p, st7789::COMMAND_A::POWER_CONTROL_1);
+	write_command(p, st7789::COMMAND::POWER_CONTROL_1);
 	write_data(p, &[ 0xA4, 0xA1 ]);
 
-	write_command(p, st7789::COMMAND_A::POSITIVE_VOLTAGE_GAMMA_CONTROL);
+	write_command(p, st7789::COMMAND::POSITIVE_VOLTAGE_GAMMA_CONTROL);
 	write_data(p, &[ 0xd0, 0x00, 0x02, 0x07, 0x0a, 0x28, 0x32, 0x44, 0x42, 0x06, 0x0e, 0x12, 0x14, 0x17 ]);
 	
-	write_command(p, st7789::COMMAND_A::NEGATIVE_VOLTAGE_GAMMA_CONTROL);
+	write_command(p, st7789::COMMAND::NEGATIVE_VOLTAGE_GAMMA_CONTROL);
 	write_data(p, &[ 0xd0, 0x00, 0x02, 0x07, 0x0a, 0x28, 0x31, 0x54, 0x47, 0x0e, 0x1c, 0x17, 0x1b, 0x1e ]); 	
 	
-	write_command(p, st7789::COMMAND_A::DISPLAY_INVERSION_ON);
+	write_command(p, st7789::COMMAND::DISPLAY_INVERSION_ON);
 	
-	write_command(p, st7789::COMMAND_A::DISPLAY_BRIGHTNESS);
+	write_command(p, st7789::COMMAND::DISPLAY_BRIGHTNESS);
 	write_data(p, &[ 0x7F ]);	//initial 25% brightness
 
-	write_command(p, st7789::COMMAND_A::GAMMA);
+	write_command(p, st7789::COMMAND::GAMMA);
 	write_data(p, &[ 0x04 ]);
 
 	// Explicitly end this bulk write
@@ -176,7 +176,7 @@ fn configure(p: &nrf52832_pac::Peripherals) {
 
 	timer::delay(p, 120);
 	
-	write_command(p, st7789::COMMAND_A::DISPLAY_ON);
+	write_command(p, st7789::COMMAND::DISPLAY_ON);
 	
 	timer::delay(p, 120);
 }
