@@ -2,6 +2,9 @@
 // Notes
 //==============================================================================
 // drivers::debug.rs
+// The debug library is meant to be a scrolling log of entries. The log will 
+// need to be built. Later.
+// The log can be hidden in real-time, as needed. Maybe with a swipe up action?
 
 //==============================================================================
 // Crates and Mods
@@ -36,12 +39,21 @@ use super::lcd::{lcd_api, font};
 //==============================================================================
 #[allow(dead_code)]
 pub fn init(p: &nrf52832_pac::Peripherals) {
-	write_line(p, "********************");
-	write_line(p, "* Debug Initialized ");
-	write_line(p, "********************");
+	write_log(p, "********************");
+	write_log(p, "* Debug Initialized ");
+	write_log(p, "********************");
 }
 
-pub fn write_line(p: &nrf52832_pac::Peripherals, string: &str) {
+pub fn write_log(p: &nrf52832_pac::Peripherals, string: &str) {
+	// Write to the log and it will be displayed as needed. As the log is a 
+	// circular buffer , log entries will be overwritten.
+
+	// TODO: Change this into a log..
+	// For now, Just display immediately.
+	write_line(p, string);
+}
+
+fn write_line(p: &nrf52832_pac::Peripherals, string: &str) {
 	// TODO: use fill_rect funtion to clear this line before writing
 
 	let bytes = string.as_bytes();
