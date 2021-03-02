@@ -9,6 +9,7 @@
 pub mod gpio;
 pub mod i2c;
 pub mod input;
+pub mod rtc;
 pub mod spi;
 pub mod timer;
 pub mod uart;
