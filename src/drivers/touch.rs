@@ -27,19 +27,15 @@ use crate::mcu::i2c;
 //==============================================================================
 // Implementations
 //==============================================================================
-pub fn init(p: &nrf52832_pac::Peripherals) {
-	i2c::init(p, get_i2cline()); 
+pub fn init(_p: &nrf52832_pac::Peripherals) {
+	// i2c::init(p);
+
+	// configure(p);
 }
 
-pub fn get_i2cline() -> &'static i2c::I2cLine {
-	static I2C_LINE: i2c::I2cLine = i2c::I2cLine {
-		scl_pin: config::I2C_SCL_PIN,
-		sda_pin: config::I2C_SDA_PIN,
-		frequency: config::I2C_FREQUENCY,
-		address: config::I2C_ADDRESS,
-	};
-
-	&I2C_LINE
+#[allow(dead_code)]
+fn configure(p: &nrf52832_pac::Peripherals) {
+	i2c::read_byte(p, config::TOUCH_I2C_ADDRESS, true);
 }
 
 //==============================================================================
@@ -50,6 +46,6 @@ pub fn get_i2cline() -> &'static i2c::I2cLine {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler() {
+// pub fn task_handler() {
 
-}
+// }

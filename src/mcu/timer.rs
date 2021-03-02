@@ -74,7 +74,7 @@ pub fn delay(p: &nrf52832_pac::Peripherals, milliseconds: u32) {
 	start(p);
 
 	while current_count < target_count {
-		task_handler(p);
+		// task_handler(p);
 		cortex_m::interrupt::free(|_| {
 			current_count = unsafe { _TIMER_COUNT };
 		});
@@ -139,6 +139,7 @@ fn TIMER0() {
 //==============================================================================
 // Task Handler
 //==============================================================================
+#[allow(dead_code)]
 pub fn task_handler(p: &nrf52832_pac::Peripherals) {
 	cortex_m::interrupt::free(|_| {
 

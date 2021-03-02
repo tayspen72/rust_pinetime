@@ -1,18 +1,21 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// drivers::lcd.rs
+// drivers::lcd::mod.rs
+// LCD Drivers Mod List
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use crate::config;
-use crate::mcu::spi;
+
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-
+pub mod font;
+pub mod lcd;
+pub mod lcd_api;
+mod st7789;
 
 //==============================================================================
 // Macros
@@ -27,24 +30,7 @@ use crate::mcu::spi;
 //==============================================================================
 // Implementations
 //==============================================================================
-pub fn init(p: &nrf52832_pac::Peripherals) {
-	spi::init(p, get_spiline()); 
-}
 
-pub fn get_spiline() -> &'static spi::SpiLine {
-	static SPI_LINE: spi::SpiLine = spi::SpiLine {
-		sclk_pin: config::SPI_SCLK_PIN,
-		sel_pin: config::SPI_SEL_PIN,
-		mosi_pin: config::SPI_MOSI_PIN,
-		miso_pin: config::SPI_MISO_PIN,
-		frequency: config::SPI_FREQUENCY,
-		order: config::SPI_ORDER,
-		cpha: config::SPI_CPHA,
-		cpol: config::SPI_CPOL,
-	};
-
-	&SPI_LINE
-}
 
 //==============================================================================
 // Interrupt Handler
@@ -54,6 +40,3 @@ pub fn get_spiline() -> &'static spi::SpiLine {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler() {
-
-}

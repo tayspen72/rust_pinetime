@@ -48,10 +48,11 @@ fn main() -> ! {
 }
 
 fn app_init(p: &nrf52832_pac::Peripherals) {
+	lcd::lcd_api::init(p);
 	debug::init(p);
+	
 	button::init(p);
 	touch::init(p);
-	lcd::init(p);
 }
 
 //==============================================================================
@@ -63,8 +64,9 @@ fn app_init(p: &nrf52832_pac::Peripherals) {
 // Task Handler
 //==============================================================================
 // TODO: This will be developed into passing around some device flags structure to handle changes as needed
-fn app_task_handler(_p: &nrf52832_pac::Peripherals) {
-	debug::task_handler();
-	lcd::task_handler();
-	touch::task_handler();
+fn app_task_handler(p: &nrf52832_pac::Peripherals) {
+	// debug::task_handler();
+	button::task_handler(p);
+	lcd::lcd_api::task_handler();
+	// touch::task_handler();
 }
