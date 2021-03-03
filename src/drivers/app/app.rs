@@ -1,27 +1,24 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// main.rs
+// drivers::lcd::lcd.rs
+// LCD Essential Functions
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-#![no_std]
-#![no_main]
 
-use cortex_m_rt::entry;
-use nrf52832_pac;
-use panic_halt as _; // Breakpoint on `rust_begin_unwind` to catch panics
-
-mod config;
-mod drivers;
-use drivers::*;
-mod mcu;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
+pub struct DeviceInfoFlags{
+	pub debug_log_active: bool,
+}
 
+pub struct DeviceInfo {
+	pub flags: DeviceInfoFlags
+}
 
 //==============================================================================
 // Macros
@@ -31,30 +28,31 @@ mod mcu;
 //==============================================================================
 // Variables
 //==============================================================================
-
+static mut DEVICE_INFO: bool = false;
 
 //==============================================================================
 // Implementations
 //==============================================================================
-#[entry]
-fn main() -> ! {
-	let peripherals = nrf52832_pac::Peripherals::take().unwrap();
-
-	app_init(&peripherals);
-	
-	let device_info = app::app::DeviceInfo::take().unwrap();
-
-	loop {
-		app_task_handler(&peripherals, &device_info);
-	};
-}
-
-fn app_init(p: &nrf52832_pac::Peripherals) {
-	lcd::lcd_api::init(p);
-	debug::init(p);
-	
-	button::init(p);
-	touch::init(p);
+impl DeviceInfo {
+    #[doc = r"Returns all the peripherals *once*"]
+    #[inline]
+    pub fn take() -> Option<Self> {
+        cortex_m::interrupt::free(|_| {
+            if unsafe { DEVICE_INFO } {
+                None
+            } else {
+                Some(unsafe { DeviceInfo::steal() })
+            }
+        })
+    }
+	pub unsafe fn steal() -> Self {
+		DEVICE_INFO = true;
+        DeviceInfo {
+			flags: DeviceInfoFlags { 
+				debug_log_active: false 
+			}
+		}
+	}
 }
 
 //==============================================================================
@@ -65,10 +63,3 @@ fn app_init(p: &nrf52832_pac::Peripherals) {
 //==============================================================================
 // Task Handler
 //==============================================================================
-// TODO: This will be developed into passing around some device flags structure to handle changes as needed
-fn app_task_handler(p: &nrf52832_pac::Peripherals, d: &app::app::DeviceInfo) {
-	debug::task_handler(p, d);
-	button::task_handler(p);
-	lcd::lcd_api::task_handler();
-	// touch::task_handler();
-}
