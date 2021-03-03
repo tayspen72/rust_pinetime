@@ -12,6 +12,7 @@ use nrf52832_pac::interrupt;
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
+#[allow(dead_code)]
 pub enum WakeInterval {
 	Interval125MS	= 512,
 	Interval250MS	= 1024,
@@ -35,6 +36,7 @@ static mut _SECONDS: u32 = 0;
 //==============================================================================
 // Implementations
 //==============================================================================
+#[allow(dead_code)]
 pub fn init(p: &nrf52832_pac::Peripherals, interval: WakeInterval) {
 	if unsafe { _INITIALIZED } {
 		return;
@@ -45,6 +47,16 @@ pub fn init(p: &nrf52832_pac::Peripherals, interval: WakeInterval) {
 	enable(p, true);
 
 	unsafe { _INITIALIZED = true; }
+}
+
+#[allow(dead_code)]
+pub fn get_timestamp() -> u32 {
+	unsafe { _SECONDS }
+}
+
+#[allow(dead_code)]
+pub fn get_timestamp_fraction() -> u32 {
+	unsafe { _FRACTION }
 }
 
 fn enable(p: &nrf52832_pac::Peripherals, is_enabled: bool) {
