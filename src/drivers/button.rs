@@ -40,12 +40,7 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
 // Interrupt Handler
 //==============================================================================
 pub fn task_handler(p: &nrf52832_pac::Peripherals) {
-	if let gpio::PinState::PinLow = gpio::get_pin_state(p, config::PUSH_BUTTON_IN_PIN) {
-		lcd::lcd::set_backlight(p, lcd::lcd::BacklightBrightness::Brightness7);
-	}
-	else {
-		lcd::lcd::set_backlight(p, lcd::lcd::BacklightBrightness::Brightness1);
-	}
+	
 }
 
 //==============================================================================

@@ -60,6 +60,26 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
 	}
 }
 
+// pub fn number_to_string(num: &u32) -> &[u8] {
+// 	let len: usize = 1;
+
+// 	let tmp_num = num;
+// 	let divider = 10;
+// 	while (num / divider) > 0 {
+// 		divider *= 10;
+// 		len += 1;
+// 	}
+	
+// 	let div = 1;
+
+// 	let val = (num / div) % 10;
+// 	div += 1;
+
+// 	let buf: &[u8] = &[0, 0, 0, 0, 0];
+
+// 	&mut buf
+// }
+
 #[allow(dead_code)]
 pub fn push_log(string: &'static str) {
 	let index = get_next_log_index();
@@ -103,11 +123,11 @@ fn write_line(p: &nrf52832_pac::Peripherals, line_number: usize) {
 	let len = bytes.len();
 
 	let mut x = DEBUG_INITIAL_X;
-	let y = DEBUG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT);
+	let y = DEBUG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT * DEBUG_SCALE);
 
 	for i in 0..len {
 		write_character(p, bytes[i] as char, x, y);
-		x += font::MINIMAL_CHARACTER_WIDTH;
+		x += font::MINIMAL_CHARACTER_WIDTH * DEBUG_SCALE;
 	}
 }
 

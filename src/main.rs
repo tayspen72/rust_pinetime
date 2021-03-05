@@ -50,6 +50,8 @@ fn main() -> ! {
 }
 
 fn app_init(p: &nrf52832_pac::Peripherals) {
+	mcu::rtc::init(p, mcu::rtc::WakeInterval::Interval250MS);
+
 	lcd::lcd_api::init(p);
 	debug::init(p);
 	
@@ -71,4 +73,5 @@ fn app_task_handler(p: &nrf52832_pac::Peripherals, d: &app::app::DeviceInfo) {
 	button::task_handler(p);
 	lcd::lcd_api::task_handler();
 	// touch::task_handler();
+	mcu::rtc::task_handler();
 }

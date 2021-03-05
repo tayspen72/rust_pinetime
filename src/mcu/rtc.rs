@@ -8,6 +8,7 @@
 //==============================================================================
 use nrf52832_pac;
 use nrf52832_pac::interrupt;
+use crate::drivers::debug;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -67,10 +68,9 @@ fn enable(p: &nrf52832_pac::Peripherals, is_enabled: bool) {
 
 	if is_enabled {
 		// Enable XTAL for Low Freq Clock Source
-		clock.lfclksrc.write(|w| w
-			.src().xtal()
-			.external().enabled());
+		clock.lfclksrc.write(|w| w.src().xtal());
 		clock.tasks_lfclkstart.write(|w| unsafe { w.bits(1) });
+		//TODO: waiting indefinitely here
 		while clock.events_lfclkstarted.read().bits() == 0 {};
 
 		//Disable RTC
@@ -126,3 +126,14 @@ fn RTC0() {
 //==============================================================================
 // Task Handler
 //==============================================================================
+pub fn task_handler(){
+	static mut last_seconds: u32 = 0;
+	
+	unsafe {
+		if last_seconds != get_timestamp() {
+			// last_seconds = get_timestamp();
+			// let time = "Time: ".as_bytes() + debug::number_to_string(&last_seconds);
+			debug::push_log("Next second: ");
+		}
+	}
+}
