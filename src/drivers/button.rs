@@ -8,7 +8,6 @@
 // Crates and Mods
 //==============================================================================
 use crate::config;
-use crate::drivers::lcd;
 use crate::mcu::gpio;
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
 use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
@@ -39,7 +38,7 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
 //==============================================================================
 // Interrupt Handler
 //==============================================================================
-pub fn task_handler(p: &nrf52832_pac::Peripherals) {
+pub fn task_handler(_p: &nrf52832_pac::Peripherals) {
 	
 }
 

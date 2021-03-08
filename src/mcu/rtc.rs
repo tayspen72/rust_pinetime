@@ -127,11 +127,11 @@ fn RTC0() {
 // Task Handler
 //==============================================================================
 pub fn task_handler(){
-	static mut last_seconds: u32 = 0;
+	static mut LAST_SECONDS: u32 = 0;
 	
 	unsafe {
-		if last_seconds != get_timestamp() {
-			// last_seconds = get_timestamp();
+		if LAST_SECONDS != get_timestamp() {
+			LAST_SECONDS = get_timestamp();
 			// let time = "Time: ".as_bytes() + debug::number_to_string(&last_seconds);
 			debug::push_log("Next second: ");
 		}
