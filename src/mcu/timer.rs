@@ -18,21 +18,16 @@ use nrf52832_pac::interrupt;
 
 
 //==============================================================================
-// Macros
-//==============================================================================
-
-
-//==============================================================================
 // Variables
 //==============================================================================
-static _TIMER_RUNNING: Mutex<Cell<bool>> = Mutex::new(Cell::new(false));
-static _TIMER_COUNT: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
+static TIMER_RUNNING: Mutex<Cell<bool>> = Mutex::new(Cell::new(false));
+static TIMER_COUNT: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
 
 static TIMER_HANDLE: Mutex<RefCell<Option<nrf52832_pac::TIMER0>>> = 
 	Mutex::new(RefCell::new(None));
 
 //==============================================================================
-// Implementations
+// Public Functions
 //==============================================================================
 pub fn init(timer: nrf52832_pac::TIMER0) {
 
@@ -42,13 +37,29 @@ pub fn init(timer: nrf52832_pac::TIMER0) {
 }
 
 pub fn get_busy() -> bool {
-	if free(|cs| _TIMER_RUNNING.borrow(cs).get()) {
+	if free(|cs| TIMER_RUNNING.borrow(cs).get()) {
 		return true;
 	}
 
 	false
 }
 
+pub fn delay(milliseconds: u32) {	
+	let mut current_count = free(|cs| TIMER_COUNT.borrow(cs).get());
+	let target_count = current_count + milliseconds;
+
+	start();
+
+	while current_count < target_count {
+		current_count = free(|cs| TIMER_COUNT.borrow(cs).get());
+	}
+
+	stop();
+}
+
+//==============================================================================
+// Private Functions
+//==============================================================================
 fn configure (t: &nrf52832_pac::TIMER0) {
 	nrf52832_pac::NVIC::mask(nrf52832_pac::Interrupt::TIMER0);
 
@@ -70,20 +81,7 @@ fn configure (t: &nrf52832_pac::TIMER0) {
 		nrf52832_pac::NVIC::unmask(nrf52832_pac::Interrupt::TIMER0);
 	}
 
-	free(|cs| _TIMER_RUNNING.borrow(cs).set(false));
-}
-
-pub fn delay(milliseconds: u32) {	
-	let mut current_count = free(|cs| _TIMER_COUNT.borrow(cs).get());
-	let target_count = current_count + milliseconds;
-
-	start();
-
-	while current_count < target_count {
-		current_count = free(|cs| _TIMER_COUNT.borrow(cs).get());
-	}
-
-	stop();
+	free(|cs| TIMER_RUNNING.borrow(cs).set(false));
 }
 
 fn enable(is_enabled: bool) {
@@ -95,7 +93,7 @@ fn enable(is_enabled: bool) {
 		t0.tasks_stop.write(|w| unsafe{ w.bits(1) });
 		t0.tasks_clear.write(|w| unsafe { w.bits(1) });
 
-		free(|cs| _TIMER_RUNNING.borrow(cs).set(false));
+		free(|cs| TIMER_RUNNING.borrow(cs).set(false));
 
 		//configure the timer to repeat indefinitely until stopped
 		t0.shorts.write(|w| w 
@@ -108,7 +106,7 @@ fn enable(is_enabled: bool) {
 
 		if is_enabled {
 			t0.tasks_start.write(|w| unsafe { w.bits(1) });
-			free(|cs| _TIMER_RUNNING.borrow(cs).set(true));
+			free(|cs| TIMER_RUNNING.borrow(cs).set(true));
 		}
 	});
 }
@@ -119,8 +117,8 @@ fn start() {
 
 fn stop() {
 	enable(false);
-	free(|cs| _TIMER_COUNT.borrow(cs).set(0));
-	free(|cs| _TIMER_RUNNING.borrow(cs).set(false));
+	free(|cs| TIMER_COUNT.borrow(cs).set(0));
+	free(|cs| TIMER_RUNNING.borrow(cs).set(false));
 }
 
 //==============================================================================
@@ -131,16 +129,15 @@ fn TIMER0() {
 	let t = unsafe { &nrf52832_pac::Peripherals::steal().TIMER0 };
 	if t.events_compare[0].read().bits() > 0 {
 		t.events_compare[0].write(|w| unsafe { w.bits(0) });
-		free(|cs| _TIMER_COUNT.borrow(cs).set(_TIMER_COUNT.borrow(cs).get() + 1));
+		free(|cs| TIMER_COUNT.borrow(cs).set(TIMER_COUNT.borrow(cs).get() + 1));
 	}
 }
 
 //==============================================================================
 // Task Handler
 //==============================================================================
-#[allow(dead_code)]
 pub fn task_handler() {
-	if free(|cs| _TIMER_RUNNING.borrow(cs).get()) {
+	if free(|cs| TIMER_RUNNING.borrow(cs).get()) {
 		stop();
 	}
 }

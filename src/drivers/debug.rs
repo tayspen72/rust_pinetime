@@ -6,6 +6,8 @@
 // need to be built. Later.
 // The log can be hidden in real-time, as needed. Maybe with a swipe up action?
 
+// TODO: make globals into mutexes
+
 //==============================================================================
 // Crates and Mods
 //==============================================================================
@@ -21,11 +23,6 @@ struct LogLine{
 	timestamp: u32,
 	line: &'static str
 }
-
-//==============================================================================
-// Macros
-//==============================================================================
-
 
 //==============================================================================
 // Variables
@@ -46,7 +43,7 @@ static mut _LOG_LINES: [LogLine; 6] = [
 ];
 
 //==============================================================================
-// Implementations
+// Public Functions
 //==============================================================================
 #[allow(dead_code)]
 pub fn init() {
@@ -59,26 +56,6 @@ pub fn init() {
 	}
 }
 
-// pub fn number_to_string(num: &u32) -> &[u8] {
-// 	let len: usize = 1;
-
-// 	let tmp_num = num;
-// 	let divider = 10;
-// 	while (num / divider) > 0 {
-// 		divider *= 10;
-// 		len += 1;
-// 	}
-	
-// 	let div = 1;
-
-// 	let val = (num / div) % 10;
-// 	div += 1;
-
-// 	let buf: &[u8] = &[0, 0, 0, 0, 0];
-
-// 	&mut buf
-// }
-
 #[allow(dead_code)]
 pub fn push_log(string: &'static str) {
 	let index = get_next_log_index();
@@ -89,6 +66,11 @@ pub fn push_log(string: &'static str) {
 	};
 }
 
+//TODO: Add functions to convert numbers to strings with black magic
+
+//==============================================================================
+// Private Functions
+//==============================================================================
 fn clear_line(_line_number: usize) {
 	
 }
@@ -115,6 +97,10 @@ fn pop_log() {
 	}
 }
 
+fn write_character(c: char, x: u16, y: u16) {
+	font::write_minimal_character(c, x, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
+}
+
 fn write_line(line_number: usize) {
 	// TODO: use fill_rect funtion to clear this line before writing
 
@@ -128,10 +114,6 @@ fn write_line(line_number: usize) {
 		write_character(bytes[i] as char, x, y);
 		x += font::MINIMAL_CHARACTER_WIDTH * DEBUG_SCALE;
 	}
-}
-
-fn write_character(c: char, x: u16, y: u16) {
-	font::write_minimal_character(c, x, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
 }
 
 //==============================================================================

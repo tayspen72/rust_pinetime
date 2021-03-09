@@ -24,11 +24,6 @@ pub enum WakeInterval {
 }
 
 //==============================================================================
-// Macros
-//==============================================================================
-
-
-//==============================================================================
 // Variables
 //==============================================================================
 static _WAKE_INTERVAL: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
@@ -39,7 +34,7 @@ static RTC_HANDLE: Mutex<RefCell<Option<nrf52832_pac::RTC0>>> =
 	Mutex::new(RefCell::new(None));
 
 //==============================================================================
-// Implementations
+// Public Functions
 //==============================================================================
 #[allow(dead_code)]
 pub fn init(rtc: nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK, interval: WakeInterval) {
@@ -53,6 +48,33 @@ pub fn init(rtc: nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK, interval: Wake
 	free(|cs| RTC_HANDLE.borrow(cs).replace(Some(rtc)));
 }
 
+#[allow(dead_code)]
+pub fn get_timestamp() -> u32 {
+	free(|cs| _SECONDS.borrow(cs).get())
+}
+
+#[allow(dead_code)]
+pub fn get_timediff(seconds: u32) -> u32 {
+	let app_seconds = free(|cs| _SECONDS.borrow(cs).get());
+	app_seconds - seconds
+}
+
+#[allow(dead_code)]
+pub fn get_timestamp_fraction() -> u32 {
+	free(|cs| _FRACTION.borrow(cs).get())
+}
+
+#[allow(dead_code)]
+pub fn get_timediff_fraction(seconds: u32, fraction: u32) -> u32 {
+	let app_seconds = free(|cs| _SECONDS.borrow(cs).get());
+	let app_fraction = free(|cs| _FRACTION.borrow(cs).get());
+
+	((app_seconds * 1000) + app_fraction) - ((seconds * 1000) + fraction)
+}
+
+//==============================================================================
+// Private Functions
+//==============================================================================
 fn configure(rtc: &nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK) {
 	nrf52832_pac::NVIC::mask(nrf52832_pac::Interrupt::RTC0);
 
@@ -87,30 +109,6 @@ fn configure(rtc: &nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK) {
 
 	free(|cs| _SECONDS.borrow(cs).set(0));
 	free(|cs| _FRACTION.borrow(cs).set(0));
-}
-
-#[allow(dead_code)]
-pub fn get_timestamp() -> u32 {
-	free(|cs| _SECONDS.borrow(cs).get())
-}
-
-#[allow(dead_code)]
-pub fn get_timediff(seconds: u32) -> u32 {
-	let app_seconds = free(|cs| _SECONDS.borrow(cs).get());
-	app_seconds - seconds
-}
-
-#[allow(dead_code)]
-pub fn get_timestamp_fraction() -> u32 {
-	free(|cs| _FRACTION.borrow(cs).get())
-}
-
-#[allow(dead_code)]
-pub fn get_timediff_fraction(seconds: u32, fraction: u32) -> u32 {
-	let app_seconds = free(|cs| _SECONDS.borrow(cs).get());
-	let app_fraction = free(|cs| _FRACTION.borrow(cs).get());
-
-	((app_seconds * 1000) + app_fraction) - ((seconds * 1000) + fraction)
 }
 
 // =============================================================================

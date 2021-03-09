@@ -29,11 +29,6 @@ pub struct SpiLine{
 }
 
 //==============================================================================
-// Macros
-//==============================================================================
-
-
-//==============================================================================
 // Variables
 //==============================================================================
 static SPI_LINE: SpiLine = SpiLine {
@@ -52,7 +47,7 @@ static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> =
 	Mutex::new(RefCell::new(None));
 
 //==============================================================================
-// Implementations
+// Public Functions
 //==============================================================================
 #[allow(dead_code)]
 pub fn init(spi0: nrf52832_pac::SPI0) {
@@ -60,31 +55,6 @@ pub fn init(spi0: nrf52832_pac::SPI0) {
 
 	free(|cs| SPI_HANDLE.borrow(cs).replace(Some(spi0)));
 	// free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(p.SPIM0)));
-}
-
-fn configure(spi: &nrf52832_pac::SPI0) {
-	spi.enable.write(|w| w.enable().disabled());
-
-	// Configure MOSI pin
-	gpio::pin_setup(SPI_LINE.mosi_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
-	spi.psel.mosi.write(|w| unsafe { w.bits(SPI_LINE.mosi_pin as u32) });
-
-	// Configure MISO pin
-	gpio::pin_setup(SPI_LINE.miso_pin, DIR::INPUT, gpio::PinState::PinHigh, PULL::PULLUP);
-	spi.psel.miso.write(|w| unsafe { w.bits(SPI_LINE.miso_pin as u32) });
-
-	// Configure SCLK pin
-	gpio::pin_setup(SPI_LINE.sclk_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
-	spi.psel.sck.write(|w| unsafe { w.bits(SPI_LINE.sclk_pin as u32) });
-
-	spi.frequency.write(|w| w.frequency().variant(SPI_LINE.frequency));
-	spi.config.write(|w| w
-		.order().variant(SPI_LINE.order)
-		.cpha().variant(SPI_LINE.cpha)
-		.cpol().variant(SPI_LINE.cpol)
-	);
-
-	spi.enable.write(|w| w.enable().enabled());
 }
 
 #[allow(dead_code)]
@@ -126,6 +96,34 @@ pub fn tx_data(data: &[u8]) {
 			spi0.rxd.read().bits();
 		}
 	});
+}
+
+//==============================================================================
+// Private Functions
+//==============================================================================
+fn configure(spi: &nrf52832_pac::SPI0) {
+	spi.enable.write(|w| w.enable().disabled());
+
+	// Configure MOSI pin
+	gpio::pin_setup(SPI_LINE.mosi_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
+	spi.psel.mosi.write(|w| unsafe { w.bits(SPI_LINE.mosi_pin as u32) });
+
+	// Configure MISO pin
+	gpio::pin_setup(SPI_LINE.miso_pin, DIR::INPUT, gpio::PinState::PinHigh, PULL::PULLUP);
+	spi.psel.miso.write(|w| unsafe { w.bits(SPI_LINE.miso_pin as u32) });
+
+	// Configure SCLK pin
+	gpio::pin_setup(SPI_LINE.sclk_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
+	spi.psel.sck.write(|w| unsafe { w.bits(SPI_LINE.sclk_pin as u32) });
+
+	spi.frequency.write(|w| w.frequency().variant(SPI_LINE.frequency));
+	spi.config.write(|w| w
+		.order().variant(SPI_LINE.order)
+		.cpha().variant(SPI_LINE.cpha)
+		.cpol().variant(SPI_LINE.cpol)
+	);
+
+	spi.enable.write(|w| w.enable().enabled());
 }
 
 //==============================================================================

@@ -33,21 +33,24 @@ mod mcu;
 
 
 //==============================================================================
-// Implementations
+// Main
 //==============================================================================
 #[entry]
 fn main() -> ! {
 
-	app_init();
+	init();
 	
 	let device_info = app::DeviceInfo::take().unwrap();
 
 	loop {
-		app_task_handler(&device_info);
+		task_handler(&device_info);
 	};
 }
 
-fn app_init() {
+//==============================================================================
+// Init
+//==============================================================================
+fn init() {
 	mcu::init(mcu::rtc::WakeInterval::Interval250MS);
 
 	lcd::lcd_api::init();
@@ -58,15 +61,9 @@ fn app_init() {
 }
 
 //==============================================================================
-// Interrupt Handler
-//==============================================================================
-
-
-//==============================================================================
 // Task Handler
 //==============================================================================
-// TODO: This will be developed into passing around some device flags structure to handle changes as needed
-fn app_task_handler(d: &app::DeviceInfo) {
+fn task_handler(d: &app::DeviceInfo) {
 	mcu::task_handler(d);
 	
 	debug::task_handler(d);
