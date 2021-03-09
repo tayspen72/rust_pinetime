@@ -9,10 +9,9 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use super::app::app;
+use super::app;
 use super::lcd::{lcd_api, font};
 use crate::mcu::rtc;
-use nrf52832_pac;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -143,7 +142,7 @@ fn write_character(c: char, x: u16, y: u16) {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(p: &nrf52832_pac::Peripherals, d: &app::DeviceInfo) {
+pub fn task_handler(d: &app::DeviceInfo) {
 	if d.flags.debug_log_active {
 		unsafe {
 			let len = _LOG_LINES.len();

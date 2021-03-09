@@ -10,7 +10,6 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use nrf52832_pac;
 use panic_halt as _; // Breakpoint on `rust_begin_unwind` to catch panics
 
 mod config;
@@ -41,7 +40,7 @@ fn main() -> ! {
 
 	app_init();
 	
-	let device_info = app::app::DeviceInfo::take().unwrap();
+	let device_info = app::DeviceInfo::take().unwrap();
 
 	loop {
 		app_task_handler(&device_info);
@@ -54,7 +53,7 @@ fn app_init() {
 	lcd::lcd_api::init();
 	debug::init();
 	
-	// button::init(p);
+	button::init();
 	// touch::init(p);
 }
 
@@ -67,10 +66,13 @@ fn app_init() {
 // Task Handler
 //==============================================================================
 // TODO: This will be developed into passing around some device flags structure to handle changes as needed
-fn app_task_handler(d: &app::app::DeviceInfo) {
-	// debug::task_handler(d);
+fn app_task_handler(d: &app::DeviceInfo) {
+	mcu::task_handler(d);
+	
+	debug::task_handler(d);
 	// button::task_handler();
 	// lcd::lcd_api::task_handler();
 	// touch::task_handler();
-	mcu::rtc::task_handler();
+
+	app::task_handler();
 }
