@@ -38,25 +38,24 @@ mod mcu;
 //==============================================================================
 #[entry]
 fn main() -> ! {
-	let peripherals = nrf52832_pac::Peripherals::take().unwrap();
 
-	app_init(&peripherals);
+	app_init();
 	
 	let device_info = app::app::DeviceInfo::take().unwrap();
 
 	loop {
-		app_task_handler(&peripherals, &device_info);
+		app_task_handler(&device_info);
 	};
 }
 
-fn app_init(p: &nrf52832_pac::Peripherals) {
-	mcu::rtc::init(p, mcu::rtc::WakeInterval::Interval250MS);
+fn app_init() {
+	mcu::init(mcu::rtc::WakeInterval::Interval250MS);
 
-	lcd::lcd_api::init(p);
-	debug::init(p);
+	lcd::lcd_api::init();
+	debug::init();
 	
-	button::init(p);
-	touch::init(p);
+	// button::init(p);
+	// touch::init(p);
 }
 
 //==============================================================================
@@ -68,10 +67,10 @@ fn app_init(p: &nrf52832_pac::Peripherals) {
 // Task Handler
 //==============================================================================
 // TODO: This will be developed into passing around some device flags structure to handle changes as needed
-fn app_task_handler(p: &nrf52832_pac::Peripherals, d: &app::app::DeviceInfo) {
-	debug::task_handler(p, d);
-	button::task_handler(p);
-	lcd::lcd_api::task_handler();
+fn app_task_handler(d: &app::app::DeviceInfo) {
+	// debug::task_handler(d);
+	// button::task_handler();
+	// lcd::lcd_api::task_handler();
 	// touch::task_handler();
 	mcu::rtc::task_handler();
 }

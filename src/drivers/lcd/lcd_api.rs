@@ -50,8 +50,8 @@ pub enum Color { // 5-6-5		R,  G,  B
 //==============================================================================
 // Implementations
 //==============================================================================
-pub fn init(p: &nrf52832_pac::Peripherals) {
-	lcd::init(p);
+pub fn init() {
+	lcd::init();
 
 	// // TODO: Fix the colors...
 	// fill_background(p, Color::Red as u16);
@@ -60,32 +60,32 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
 	// fill_background(p, Color::Green as u16);
 	// fill_background(p, Color::Blue as u16);
 	// fill_background(p, Color::Purple as u16);
-	fill_background(p, Color::Black as u16);
-	lcd::set_backlight(p, lcd::BacklightBrightness::Brightness7);
+	fill_background(Color::Black as u16);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness7);
 }
 
-pub fn fill_background(p: &nrf52832_pac::Peripherals, color: u16) {
-	set_window(p, 0, 240, 0, 240);
-	lcd::write_command(p, st7789::COMMAND::MEMORY_WRITE);
+pub fn fill_background(color: u16) {
+	set_window(0, 240, 0, 240);
+	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	for _ in 0..57600 {
-		lcd::write_data(p, &[ ((color & 0xFF00) >> 8)as u8, (color & 0xFF) as u8 ]);
+		lcd::write_data(&[ ((color & 0xFF00) >> 8)as u8, (color & 0xFF) as u8 ]);
 	}
 }
 
-pub fn set_window(p: &nrf52832_pac::Peripherals, x: u16, width: u16, y: u16, height: u16) {
+pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
 	let x_end = x + width - 1;
 	let y_end = y + height - 1;
 
 	// Define the window column size
-	lcd::write_command(p, st7789::COMMAND::COLUMN_ADDRESS);
-	lcd::write_data(p, &[ 
+	lcd::write_command(st7789::COMMAND::COLUMN_ADDRESS);
+	lcd::write_data( &[ 
 		((x & 0xFF00) >> 8) as u8, (x & 0x00FF) as u8,
 		((x_end & 0xFF00) >> 8) as u8, (x_end & 0x00FF) as u8,
 	]);
 
 	// Define the window row size
-	lcd::write_command(p, st7789::COMMAND::ROW_ADDRESS);
-	lcd::write_data(p, &[ 
+	lcd::write_command(st7789::COMMAND::ROW_ADDRESS);
+	lcd::write_data( &[ 
 		((y & 0xFF00) >> 8) as u8, (y & 0x00FF) as u8,
 		((y_end & 0xFF00) >> 8) as u8, (y_end & 0x00FF) as u8,
 	]);

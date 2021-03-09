@@ -7,6 +7,8 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use core::cell::RefCell;
+use cortex_m::interrupt::{free, Mutex};
 use nrf52832_pac;
 
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
@@ -45,52 +47,72 @@ pub enum PinState{
 //==============================================================================
 // Variables
 //==============================================================================
-
+static GPIO_HANDLE: Mutex<RefCell<Option<nrf52832_pac::P0>>> = 
+	Mutex::new(RefCell::new(None));
 
 //==============================================================================
 // Implementations
 //==============================================================================
+pub fn init(p0: nrf52832_pac::P0) {
+	free(|cs| GPIO_HANDLE.borrow(cs).replace(Some(p0)));
+}
+
 #[allow(dead_code)]
-pub fn get_pin_state(p: &nrf52832_pac::Peripherals, pin: u8) -> PinState {
-	match p.P0.in_.read().bits() & (1 << pin) {
+pub fn get_pin_state(pin: u8) -> PinState {
+	let read = free(|cs| GPIO_HANDLE.borrow(cs).borrow().as_ref().unwrap().in_.read().bits());
+	match read & (1 << pin) {
 		0 => PinState::PinLow,
 		_ => PinState::PinHigh
 	}
 }
 
 #[allow(dead_code)]
-pub fn pin_disable(p: &nrf52832_pac::Peripherals, pin: u8) {
-	// Set as input and disconnect the buffer
-	p.P0.pin_cnf[pin as usize].modify(|_, w| w.dir().input());
-	p.P0.pin_cnf[pin as usize].modify(|_, w| w.input().disconnect());
+pub fn pin_disable(pin: u8) {
+	free(|cs| {
+		let p = GPIO_HANDLE.borrow(cs).borrow();
+		let p0 = p.as_ref().unwrap();
+		// Set as input and disconnect the buffer
+		p0.pin_cnf[pin as usize].modify(|_, w| w.dir().input());
+		p0.pin_cnf[pin as usize].modify(|_, w| w.input().disconnect());
+
+	});
 }
 
 #[allow(dead_code)]
-pub fn pin_setup(p: &nrf52832_pac::Peripherals, pin: u8, dir: DIR, state: PinState, pull: PULL){
+pub fn pin_setup(pin: u8, dir: DIR, state: PinState, pull: PULL){
+	free(|cs| {
+		let p = GPIO_HANDLE.borrow(cs).borrow();
+		let p0 = p.as_ref().unwrap();
+		
 		// Set direction
-	p.P0.pin_cnf[pin as usize].modify(|_, w| w.dir().variant(dir));
-	if let DIR::INPUT = dir {
-		p.P0.pin_cnf[pin as usize].modify(|_, w| w.input().connect());
-	}
-	else {
-		p.P0.pin_cnf[pin as usize].modify(|_, w| w.input().disconnect());
-	}
-	
-	// Set pin pull
-	p.P0.pin_cnf[pin as usize].modify(|_, w| w.pull().variant(pull));
+		p0.pin_cnf[pin as usize].modify(|_, w| w.dir().variant(dir));
+		if let DIR::INPUT = dir {
+			p0.pin_cnf[pin as usize].modify(|_, w| w.input().connect());
+		}
+		else {
+			p0.pin_cnf[pin as usize].modify(|_, w| w.input().disconnect());
+		}
+		
+		// Set pin pull
+		p0.pin_cnf[pin as usize].modify(|_, w| w.pull().variant(pull));
 
-	// Set output state
-	match state {
-		PinState::PinLow => p.P0.outclr.write(|w| unsafe {w.bits(1 << pin)}),
-		PinState::PinHigh => p.P0.outset.write(|w| unsafe {w.bits(1 << pin)})
-	}
+		// Set output state
+		match state {
+			PinState::PinLow => p0.outclr.write(|w| unsafe {w.bits(1 << pin)}),
+			PinState::PinHigh => p0.outset.write(|w| unsafe {w.bits(1 << pin)})
+		}
+	});
 }
 
 #[allow(dead_code)]
-pub fn set_pin_state(p: &nrf52832_pac::Peripherals, pin: u8, state: PinState){
+pub fn set_pin_state(pin: u8, state: PinState){
 	match state {
-		PinState::PinLow => p.P0.outclr.write(|w| unsafe {w.bits(1 << pin)}),
-		PinState::PinHigh => p.P0.outset.write(|w| unsafe {w.bits(1 << pin)})
+		PinState::PinLow => {
+			free(|cs| GPIO_HANDLE.borrow(cs).borrow().as_ref().unwrap().outclr.write(|w| unsafe { w.bits(1 << pin) }))
+		},
+		PinState::PinHigh => {
+			free(|cs| GPIO_HANDLE.borrow(cs).borrow().as_ref().unwrap().outset.write(|w| unsafe { w.bits(1 << pin) }))
+		}
 	}
 }
 

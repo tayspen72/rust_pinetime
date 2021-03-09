@@ -22,7 +22,7 @@ pub struct I2cLine {
 //==============================================================================
 // Macros
 //==============================================================================
-
+//TODO: Finish this!!
 
 //==============================================================================
 // Variables
@@ -37,9 +37,7 @@ static _I2C_LINE: I2cLine = I2cLine {
 // Implementations
 //==============================================================================
 #[allow(dead_code)]
-pub fn init(p: &nrf52832_pac::Peripherals){
-	let i2c = &p.TWI0;
-	
+pub fn init(i2c: nrf52832_pac::TWI0){
 	i2c.enable.write(|w| w.enable().disabled());
 	
 	i2c.pselscl.write(|w| unsafe { w.bits(_I2C_LINE.scl_pin as u32) } );

@@ -50,10 +50,10 @@ static mut _LOG_LINES: [LogLine; 6] = [
 // Implementations
 //==============================================================================
 #[allow(dead_code)]
-pub fn init(p: &nrf52832_pac::Peripherals) {
-	write_line(p, 0);
-	write_line(p, 1);
-	write_line(p, 2);
+pub fn init() {
+	write_line(0);
+	write_line(1);
+	write_line(2);
 
 	unsafe {
 		_LOG_LINES[0].line = "* Debug Initialized ";
@@ -90,7 +90,7 @@ pub fn push_log(string: &'static str) {
 	};
 }
 
-fn clear_line(_p: &nrf52832_pac::Peripherals, _line_number: usize) {
+fn clear_line(_line_number: usize) {
 	
 }
 
@@ -116,7 +116,7 @@ fn pop_log() {
 	}
 }
 
-fn write_line(p: &nrf52832_pac::Peripherals, line_number: usize) {
+fn write_line(line_number: usize) {
 	// TODO: use fill_rect funtion to clear this line before writing
 
 	let bytes = unsafe { _LOG_LINES[line_number].line.as_bytes() };
@@ -126,13 +126,13 @@ fn write_line(p: &nrf52832_pac::Peripherals, line_number: usize) {
 	let y = DEBUG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT * DEBUG_SCALE);
 
 	for i in 0..len {
-		write_character(p, bytes[i] as char, x, y);
+		write_character(bytes[i] as char, x, y);
 		x += font::MINIMAL_CHARACTER_WIDTH * DEBUG_SCALE;
 	}
 }
 
-fn write_character(p: &nrf52832_pac::Peripherals, c: char, x: u16, y: u16) {
-	font::write_minimal_character(p, c, x, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
+fn write_character(c: char, x: u16, y: u16) {
+	font::write_minimal_character(c, x, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
 }
 
 //==============================================================================
@@ -148,10 +148,10 @@ pub fn task_handler(p: &nrf52832_pac::Peripherals, d: &app::DeviceInfo) {
 		unsafe {
 			let len = _LOG_LINES.len();
 			for i in 0..len {
-				clear_line(p, i);
+				clear_line(i);
 
 				if _LOG_LINES[i].active {
-					write_line(p, i);
+					write_line(i);
 				}
 			}
 		}

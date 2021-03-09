@@ -27,15 +27,16 @@ use crate::mcu::i2c;
 //==============================================================================
 // Implementations
 //==============================================================================
-pub fn init(_p: &nrf52832_pac::Peripherals) {
-	// i2c::init(p);
-
-	// configure(p);
+#[allow(dead_code)]
+pub fn init() {
+	configure();
 }
 
 #[allow(dead_code)]
-fn configure(p: &nrf52832_pac::Peripherals) {
-	i2c::read_byte(p, config::TOUCH_I2C_ADDRESS, true);
+fn configure() {
+	//TODO: Fix this
+	let p = unsafe { nrf52832_pac::Peripherals::steal() };
+	i2c::read_byte(&p, config::TOUCH_I2C_ADDRESS, true);
 }
 
 //==============================================================================

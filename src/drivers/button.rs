@@ -30,15 +30,15 @@ use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
 //==============================================================================
 // Implementations
 //==============================================================================
-pub fn init(p: &nrf52832_pac::Peripherals) {
-	gpio::pin_setup(p, config::PUSH_BUTTON_IN_PIN, DIR::INPUT, gpio::PinState::PinLow, PULL::PULLUP);
-	gpio::pin_setup(p, config::PUSH_BUTTON_OUT_PIN, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
+pub fn init() {
+	gpio::pin_setup(config::PUSH_BUTTON_IN_PIN, DIR::INPUT, gpio::PinState::PinLow, PULL::PULLUP);
+	gpio::pin_setup(config::PUSH_BUTTON_OUT_PIN, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
 }
 
 //==============================================================================
 // Interrupt Handler
 //==============================================================================
-pub fn task_handler(_p: &nrf52832_pac::Peripherals) {
+pub fn task_handler() {
 	
 }
 

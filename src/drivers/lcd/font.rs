@@ -190,12 +190,12 @@ fn get_minimal_character(c: char) -> &'static MinimalCharacter {
 }
 
 #[allow(dead_code)]
-pub fn write_minimal_character(p: &nrf52832_pac::Peripherals, c: char, x: u16, y: u16, fg: u16, bg: u16, scale: u16) {
+pub fn write_minimal_character(c: char, x: u16, y: u16, fg: u16, bg: u16, scale: u16) {
 	let char_width = MINIMAL_CHARACTER_WIDTH * scale;
 	let char_height = MINIMAL_CHARACTER_HEIGHT * scale;
 
-	lcd_api::set_window(p, x, char_width, y, char_height);
-	lcd::write_command(p, st7789::COMMAND::MEMORY_WRITE);
+	lcd_api::set_window(x, char_width, y, char_height);
+	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	let bytes = get_minimal_character(c).bytes;
 	let bg_color: [u8; 2] = [ ((bg & 0xFF00) >> 8) as u8, (bg & 0x00FF) as u8 ];
 	let fg_color: [u8; 2] = [ ((fg & 0xFF00) >> 8) as u8, (fg & 0x00FF) as u8 ];
@@ -217,10 +217,10 @@ pub fn write_minimal_character(p: &nrf52832_pac::Peripherals, c: char, x: u16, y
 
 				for _col_scaler in 0..scale {
 					if pixel_is_on {
-						lcd::write_data(p, &fg_color);
+						lcd::write_data(&fg_color);
 					}
 					else {
-						lcd::write_data(p, &bg_color);
+						lcd::write_data(&bg_color);
 					}
 				}
 				

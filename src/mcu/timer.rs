@@ -8,6 +8,8 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use core::cell::{Cell, RefCell};
+use cortex_m::interrupt::{free, Mutex};
 use nrf52832_pac::interrupt;
 
 //==============================================================================
@@ -23,20 +25,23 @@ use nrf52832_pac::interrupt;
 //==============================================================================
 // Variables
 //==============================================================================
-static mut _INITIALIZED: bool = false;
-static mut _TIMER_RUNNING: bool = false;
-static mut _TIMER_COUNT: u32 = 0;
+static _TIMER_RUNNING: Mutex<Cell<bool>> = Mutex::new(Cell::new(false));
+static _TIMER_COUNT: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
+
+static TIMER_HANDLE: Mutex<RefCell<Option<nrf52832_pac::TIMER0>>> = 
+	Mutex::new(RefCell::new(None));
 
 //==============================================================================
 // Implementations
 //==============================================================================
-pub fn init(p: &nrf52832_pac::Peripherals) {
-	if unsafe { _INITIALIZED } {
-		return;
-	}
+pub fn init(timer: nrf52832_pac::TIMER0) {
 
-	let t = &p.TIMER0;
+	configure(&timer);
 
+	free(|cs| TIMER_HANDLE.borrow(cs).replace(Some(timer)));
+}
+
+fn configure (t: &nrf52832_pac::TIMER0) {
 	nrf52832_pac::NVIC::mask(nrf52832_pac::Interrupt::TIMER0);
 
 	// Stop the timer before init for good measure 
@@ -57,71 +62,57 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
 		nrf52832_pac::NVIC::unmask(nrf52832_pac::Interrupt::TIMER0);
 	}
 
-	unsafe {
-		_TIMER_RUNNING = false;
-		_INITIALIZED = true;
-	}
+	free(|cs| _TIMER_RUNNING.borrow(cs).set(false));
 }
 
-pub fn delay(p: &nrf52832_pac::Peripherals, milliseconds: u32) {
-	if unsafe { !_INITIALIZED } {
-		init(p);
-	}
-	
-	let mut current_count = unsafe { _TIMER_COUNT };
+pub fn delay(milliseconds: u32) {	
+	let mut current_count = free(|cs| _TIMER_COUNT.borrow(cs).get());
 	let target_count = current_count + milliseconds;
 
-	start(p);
+	start();
 
 	while current_count < target_count {
-		// task_handler(p);
-		cortex_m::interrupt::free(|_| {
-			current_count = unsafe { _TIMER_COUNT };
-		});
+		current_count = free(|cs| _TIMER_COUNT.borrow(cs).get());
 	}
 
-	stop(p);
+	stop();
 }
 
-fn enable(p: &nrf52832_pac::Peripherals, is_enabled: bool) {
-	if unsafe { !_INITIALIZED } {
-		init(p);
-	}
-	
-	let t = &p.TIMER0;
+fn enable(is_enabled: bool) {
+	free(|cs| {
+		let t = TIMER_HANDLE.borrow(cs).borrow();
+		let t0 = t.as_ref().unwrap();
 
-	// Stop the timer before config 
-	t.tasks_stop.write(|w| unsafe{ w.bits(1) });
-	t.tasks_clear.write(|w| unsafe { w.bits(1) });
+		// Stop the timer before config 
+		t0.tasks_stop.write(|w| unsafe{ w.bits(1) });
+		t0.tasks_clear.write(|w| unsafe { w.bits(1) });
 
-	unsafe { _TIMER_RUNNING = false; }
+		free(|cs| _TIMER_RUNNING.borrow(cs).set(false));
 
-	//configure the timer to repeat indefinitely until stopped
-	t.shorts.write(|w| w 
-		.compare0_stop().disabled()
-		.compare0_clear().enabled()
-	);
+		//configure the timer to repeat indefinitely until stopped
+		t0.shorts.write(|w| w 
+			.compare0_stop().disabled()
+			.compare0_clear().enabled()
+		);
 
-	// Configure the timer to fire interrupt in 1ms intervals
-	t.cc[0].write(|w| unsafe { w.bits(125) });
+		// Configure the timer to fire interrupt in 1ms intervals
+		t0.cc[0].write(|w| unsafe { w.bits(125) });
 
-	if is_enabled {
-		t.tasks_start.write(|w| unsafe { w.bits(1) });
-		unsafe { _TIMER_RUNNING = true; }
-	}
+		if is_enabled {
+			t0.tasks_start.write(|w| unsafe { w.bits(1) });
+			free(|cs| _TIMER_RUNNING.borrow(cs).set(true));
+		}
+	});
 }
 
-fn start(p: &nrf52832_pac::Peripherals) {
-	if unsafe { _TIMER_RUNNING } {
-		return; 
-	}
-	enable(p, true);
+fn start() {
+	enable(true);
 }
 
-fn stop(p: &nrf52832_pac::Peripherals) {
-	enable(p, false);
-	unsafe { _TIMER_COUNT = 0 };
-	unsafe { _TIMER_RUNNING = false; };
+fn stop() {
+	enable(false);
+	free(|cs| _TIMER_COUNT.borrow(cs).set(0));
+	free(|cs| _TIMER_RUNNING.borrow(cs).set(false));
 }
 
 //==============================================================================
@@ -132,7 +123,7 @@ fn TIMER0() {
 	let t = unsafe { &nrf52832_pac::Peripherals::steal().TIMER0 };
 	if t.events_compare[0].read().bits() > 0 {
 		t.events_compare[0].write(|w| unsafe { w.bits(0) });
-		unsafe { _TIMER_COUNT += 1; };
+		free(|cs| _TIMER_COUNT.borrow(cs).set(_TIMER_COUNT.borrow(cs).get() + 1));
 	}
 }
 
@@ -140,13 +131,8 @@ fn TIMER0() {
 // Task Handler
 //==============================================================================
 #[allow(dead_code)]
-pub fn task_handler(p: &nrf52832_pac::Peripherals) {
-	cortex_m::interrupt::free(|_| {
-
-	});
-
-	if unsafe { _TIMER_RUNNING } {
-		stop(p);
+pub fn task_handler() {
+	if free(|cs| _TIMER_RUNNING.borrow(cs).get()) {
+		stop();
 	}
-
 }

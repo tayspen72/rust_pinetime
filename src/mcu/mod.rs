@@ -14,6 +14,8 @@ pub mod spi;
 pub mod timer;
 pub mod uart;
 
+use nrf52832_pac;
+
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
@@ -32,7 +34,17 @@ pub mod uart;
 //==============================================================================
 // Implementations
 //==============================================================================
+pub fn init(wake_interval: rtc::WakeInterval) {
+	let peripherals = nrf52832_pac::Peripherals::take().unwrap();
 
+	gpio::init(peripherals.P0);
+
+	i2c::init(peripherals.TWI0);
+	rtc::init(peripherals.RTC0, &peripherals.CLOCK, wake_interval);
+	spi::init(peripherals.SPI0);
+	timer::init(peripherals.TIMER0);
+
+}
 
 //==============================================================================
 // Interrupt Handler

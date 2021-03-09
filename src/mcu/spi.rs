@@ -6,6 +6,8 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use core::cell::RefCell;
+use cortex_m::interrupt::{free, Mutex};
 use nrf52832_pac::spi0;
 use crate::config;
 use crate::mcu::gpio;
@@ -44,27 +46,35 @@ static SPI_LINE: SpiLine = SpiLine {
 	cpol: config::SPI_CPOL,
 };
 
-static mut _INITIALIZED: bool = false;
+static SPI_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPI0>>> = 
+	Mutex::new(RefCell::new(None));
+static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> = 
+	Mutex::new(RefCell::new(None));
 
 //==============================================================================
 // Implementations
 //==============================================================================
 #[allow(dead_code)]
-pub fn init(p: &nrf52832_pac::Peripherals) {
-	let spi = &p.SPI0;
+pub fn init(spi0: nrf52832_pac::SPI0) {
+	configure(&spi0);
 
+	free(|cs| SPI_HANDLE.borrow(cs).replace(Some(spi0)));
+	// free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(p.SPIM0)));
+}
+
+fn configure(spi: &nrf52832_pac::SPI0) {
 	spi.enable.write(|w| w.enable().disabled());
 
 	// Configure MOSI pin
-	gpio::pin_setup(p, SPI_LINE.mosi_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
+	gpio::pin_setup(SPI_LINE.mosi_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
 	spi.psel.mosi.write(|w| unsafe { w.bits(SPI_LINE.mosi_pin as u32) });
 
 	// Configure MISO pin
-	gpio::pin_setup(p, SPI_LINE.miso_pin, DIR::INPUT, gpio::PinState::PinHigh, PULL::PULLUP);
+	gpio::pin_setup(SPI_LINE.miso_pin, DIR::INPUT, gpio::PinState::PinHigh, PULL::PULLUP);
 	spi.psel.miso.write(|w| unsafe { w.bits(SPI_LINE.miso_pin as u32) });
 
 	// Configure SCLK pin
-	gpio::pin_setup(p, SPI_LINE.sclk_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
+	gpio::pin_setup(SPI_LINE.sclk_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
 	spi.psel.sck.write(|w| unsafe { w.bits(SPI_LINE.sclk_pin as u32) });
 
 	spi.frequency.write(|w| w.frequency().variant(SPI_LINE.frequency));
@@ -75,46 +85,47 @@ pub fn init(p: &nrf52832_pac::Peripherals) {
 	);
 
 	spi.enable.write(|w| w.enable().enabled());
-
-	unsafe { _INITIALIZED = true };
 }
 
 #[allow(dead_code)]
-pub fn tx_block(p: &nrf52832_pac::Peripherals, block: &[u8]) {
-	if !unsafe { _INITIALIZED }{
-		init(p);
-	}
-
-	p.SPIM0.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
-	p.SPIM0.txd.ptr.write(|w| unsafe { w.ptr().bits( block.as_ptr() as u32) });
+pub fn tx_block(block: &[u8]) {
+	//TODO: Unfinished and untested
+	free(|cs| {
+		let spim = SPIM_HANDLE.borrow(cs).borrow();
+		let spim0 = spim.as_ref().unwrap();
+		spim0.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
+		spim0.txd.ptr.write(|w| unsafe { w.ptr().bits( block.as_ptr() as u32) });
+	});
 }
 
 #[allow(dead_code)]
-pub fn tx_byte(p: &nrf52832_pac::Peripherals, byte: u8) {
-	if !unsafe { _INITIALIZED }{
-		init(p);
-	}
+pub fn tx_byte(byte: u8) {
+	free(|cs| {
+		let spi = SPI_HANDLE.borrow(cs).borrow();
+		let spi0 = spi.as_ref().unwrap();
 
-	p.SPI0.txd.write(|w| unsafe { w.txd().bits(byte) });
+		spi0.txd.write(|w| unsafe { w.txd().bits(byte) });
 
-	while p.SPI0.events_ready.read().bits() == 0 {};
+		while spi0.events_ready.read().bits() == 0 {};
 
-	p.SPI0.rxd.read().bits();
+		spi0.rxd.read().bits();
+	});
 }
 
 #[allow(dead_code)]
-pub fn tx_data(p: &nrf52832_pac::Peripherals, data: &[u8]) {
-	if !unsafe { _INITIALIZED }{
-		init(p);
-	}
+pub fn tx_data(data: &[u8]) {
+	free(|cs| {
+		let spi = SPI_HANDLE.borrow(cs).borrow();
+		let spi0 = spi.as_ref().unwrap();
 
-	for i in 0..data.len() {
-		p.SPI0.txd.write(|w| unsafe { w.txd().bits(data[i]) });
+		for i in 0..data.len() {
+			spi0.txd.write(|w| unsafe { w.txd().bits(data[i]) });
 
-		while p.SPI0.events_ready.read().bits() == 0 {};
+			while spi0.events_ready.read().bits() == 0 {};
 
-		p.SPI0.rxd.read().bits();
-	}
+			spi0.rxd.read().bits();
+		}
+	});
 }
 
 //==============================================================================
