@@ -17,7 +17,8 @@ use crate::mcu::i2c;
 //==============================================================================
 // Variables
 //==============================================================================
-
+//TODO: move this into a large register description file when finished
+const TOUCH_ID:u8 = 0xFF;	// wrong value!
 
 //==============================================================================
 // Public Functions
@@ -30,10 +31,37 @@ pub fn init() {
 //==============================================================================
 // Private Functions
 //==============================================================================
+fn check_connected() -> bool {
+	let id = read_register(0x00).unwrap();
+	if id == TOUCH_ID {
+		true
+	}
+	else {
+		false
+	}
+}
+
 fn configure() {
-	//TODO: Fix this
-	let p = unsafe { nrf52832_pac::Peripherals::steal() };
-	i2c::read_byte(&p, config::TOUCH_I2C_ADDRESS, true);
+	if !check_connected() {
+		return;
+	}
+}
+
+fn read_register(reg: u8) -> Option<u8> {
+	if i2c::write_byte(config::TOUCH_I2C_ADDRESS, reg, true, false).unwrap() {
+		return i2c::read_byte(config::TOUCH_I2C_ADDRESS, true);
+	}
+
+	None
+}
+
+#[allow(dead_code)]
+fn write_register(reg: u8, data: &[u8]) -> Option<bool> {
+	if i2c::write_byte(config::TOUCH_I2C_ADDRESS, reg, true, false).unwrap() {
+		return i2c::write_data(config::TOUCH_I2C_ADDRESS, data, false, true);
+	}
+
+	None
 }
 
 //==============================================================================
