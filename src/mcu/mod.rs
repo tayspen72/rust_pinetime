@@ -15,6 +15,7 @@ pub mod timer;
 pub mod uart;
 
 use nrf52832_pac;
+use crate::drivers::app;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -54,3 +55,7 @@ pub fn init(wake_interval: rtc::WakeInterval) {
 //==============================================================================
 // Task Handler
 //==============================================================================
+pub fn task_handler(_d: &app::DeviceInfo) {
+	rtc::task_handler();
+	timer::task_handler();
+}

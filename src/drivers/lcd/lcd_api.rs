@@ -64,6 +64,11 @@ pub fn init() {
 	lcd::set_backlight(lcd::BacklightBrightness::Brightness7);
 }
 
+pub fn get_busy() -> bool {
+	// For now, not using DMA, this library will never be busy
+	false
+}
+
 pub fn fill_background(color: u16) {
 	set_window(0, 240, 0, 240);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
@@ -99,6 +104,4 @@ pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler() {
 
-}

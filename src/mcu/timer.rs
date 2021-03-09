@@ -41,6 +41,14 @@ pub fn init(timer: nrf52832_pac::TIMER0) {
 	free(|cs| TIMER_HANDLE.borrow(cs).replace(Some(timer)));
 }
 
+pub fn get_busy() -> bool {
+	if free(|cs| _TIMER_RUNNING.borrow(cs).get()) {
+		return true;
+	}
+
+	false
+}
+
 fn configure (t: &nrf52832_pac::TIMER0) {
 	nrf52832_pac::NVIC::mask(nrf52832_pac::Interrupt::TIMER0);
 

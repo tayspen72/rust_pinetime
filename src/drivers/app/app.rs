@@ -1,24 +1,19 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// drivers::lcd::lcd.rs
-// LCD Essential Functions
+// drivers::app::app.rs
+// Top level app behavior
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-
+use crate::drivers::*;
+use crate::mcu::*;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-pub struct DeviceInfoFlags{
-	pub debug_log_active: bool,
-}
 
-pub struct DeviceInfo {
-	pub flags: DeviceInfoFlags
-}
 
 //==============================================================================
 // Macros
@@ -28,31 +23,20 @@ pub struct DeviceInfo {
 //==============================================================================
 // Variables
 //==============================================================================
-static mut DEVICE_INFO: bool = false;
+
 
 //==============================================================================
 // Implementations
 //==============================================================================
-impl DeviceInfo {
-    #[doc = r"Returns all the peripherals *once*"]
-    #[inline]
-    pub fn take() -> Option<Self> {
-        cortex_m::interrupt::free(|_| {
-            if unsafe { DEVICE_INFO } {
-                None
-            } else {
-                Some(unsafe { DeviceInfo::steal() })
-            }
-        })
+pub fn get_state() -> app::AppState {
+    if lcd::lcd_api::get_busy() {
+        return app::AppState::BusyLcd;
     }
-	pub unsafe fn steal() -> Self {
-		DEVICE_INFO = true;
-        DeviceInfo {
-			flags: DeviceInfoFlags { 
-				debug_log_active: false 
-			}
-		}
-	}
+    else if timer::get_busy() {
+        return app::AppState::BusyTimer;
+    }
+
+    app::AppState::Idle
 }
 
 //==============================================================================
