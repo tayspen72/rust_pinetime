@@ -152,8 +152,7 @@ pub fn task_handler(){
 		let time_diff = get_timediff(LAST_TIMESTAMP);
 		if time_diff >= UPDATE_FREQUENCY_SECONDS {
 			LAST_TIMESTAMP = get_timestamp();
-			// let time = "Time: ".as_bytes() + debug::number_to_string(&last_seconds);
-			debug::push_log("Next second: ");
+			debug::push_log_number("Next second: ", &LAST_TIMESTAMP);
 		}
 	}
 }
