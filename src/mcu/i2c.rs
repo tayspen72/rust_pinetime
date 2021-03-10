@@ -6,7 +6,7 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use core::cell::{Cell, RefCell};
+use core::cell::RefCell;
 use cortex_m::interrupt::{free, Mutex};
 use crate::config;
 use nrf52832_pac;
@@ -27,11 +27,11 @@ pub struct I2cLine {
 static I2C_HANDLE: Mutex<RefCell<Option<nrf52832_pac::TWI0>>> = 
 	Mutex::new(RefCell::new(None));
 
-static I2C_LINE: Mutex<Cell<I2cLine>> = Mutex::new(Cell::new( I2cLine {
+const I2C_LINE: I2cLine = I2cLine {
 	scl_pin: config::I2C_SCL_PIN,
 	sda_pin: config::I2C_SDA_PIN,
 	frequency: config::I2C_FREQUENCY,
-} ));
+};
 
 //==============================================================================
 // Public Functions
@@ -141,9 +141,9 @@ pub fn read_byte(address: u8, send_stop: bool) -> Option<u8> {
 fn configure(i2c: &nrf52832_pac::TWI0) {
 	i2c.enable.write(|w| w.enable().disabled());
 	
-	i2c.pselscl.write(|w| unsafe { w.bits( free(|cs| I2C_LINE.borrow(cs).get().scl_pin as u32) )});
-	i2c.pselsda.write(|w| unsafe { w.bits( free(|cs| I2C_LINE.borrow(cs).get().sda_pin as u32) )});
-	i2c.frequency.write(|w| w.frequency().variant( free(|cs| I2C_LINE.borrow(cs).get().frequency)));
+	i2c.pselscl.write(|w| unsafe { w.bits( I2C_LINE.scl_pin as u32) });
+	i2c.pselsda.write(|w| unsafe { w.bits( I2C_LINE.sda_pin as u32) });
+	i2c.frequency.write(|w| w.frequency().variant( I2C_LINE.frequency));
 	
 	i2c.enable.write(|w| w.enable().enabled());
 }

@@ -31,7 +31,7 @@ pub struct SpiLine{
 //==============================================================================
 // Variables
 //==============================================================================
-static SPI_LINE: SpiLine = SpiLine {
+const SPI_LINE: SpiLine = SpiLine {
 	sclk_pin: config::SPI_SCLK_PIN,
 	mosi_pin: config::SPI_MOSI_PIN,
 	miso_pin: config::SPI_MISO_PIN,
