@@ -49,7 +49,7 @@ impl DeviceInfo {
 		DEVICE_INFO = true;
         DeviceInfo {
 			flags: DeviceInfoFlags { 
-				debug_log_active: false 
+				debug_log_active: true 
 			}
 		}
 	}
