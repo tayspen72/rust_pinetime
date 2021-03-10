@@ -73,6 +73,14 @@ pub fn fill_background(color: u16) {
 	}
 }
 
+pub fn fill_rectangle(x: u16, width: u16, y: u16, height: u16, color: u16) {
+	set_window(x, width, y, height);
+	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
+	for _ in 0..(width * height) {
+		lcd::write_data(&[ ((color & 0xFF00) >> 8)as u8, (color & 0xFF) as u8 ]);
+	}
+}
+
 pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
 	let x_end = x + width - 1;
 	let y_end = y + height - 1;
