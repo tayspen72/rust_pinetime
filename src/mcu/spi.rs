@@ -13,6 +13,7 @@ use crate::config;
 use crate::mcu::gpio;
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
 use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
+use core::ptr;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -31,6 +32,9 @@ pub struct SpiLine{
 //==============================================================================
 // Variables
 //==============================================================================
+const SPIM_RX_PTR: usize = config::SPIM_RX_BANKA;
+const SPIM_TX_PTR: usize = config::SPIM_TX_BANKA;
+
 const SPI_LINE: SpiLine = SpiLine {
 	sclk_pin: config::SPI_SCLK_PIN,
 	mosi_pin: config::SPI_MOSI_PIN,
@@ -50,21 +54,30 @@ static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> =
 // Public Functions
 //==============================================================================
 #[allow(dead_code)]
-pub fn init(spi0: nrf52832_pac::SPI0) {
+pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
 	configure(&spi0);
 
 	free(|cs| SPI_HANDLE.borrow(cs).replace(Some(spi0)));
-	// free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(p.SPIM0)));
+	free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(spim0)));
 }
 
 #[allow(dead_code)]
 pub fn tx_block(block: &[u8]) {
-	//TODO: Unfinished and untested
+	unsafe { for i in 0..block.len() {
+		ptr::write((SPIM_TX_PTR+i) as *mut u8, block[i]);
+	} }
+
 	free(|cs| {
 		let spim = SPIM_HANDLE.borrow(cs).borrow();
 		let spim0 = spim.as_ref().unwrap();
+		spim0.rxd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
+		spim0.rxd.ptr.write(|w| unsafe { w.ptr().bits(SPIM_RX_PTR as u32) });
 		spim0.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
-		spim0.txd.ptr.write(|w| unsafe { w.ptr().bits( block.as_ptr() as u32) });
+		spim0.txd.ptr.write(|w| unsafe { w.ptr().bits(SPIM_TX_PTR as u32) });
+
+		spim0.tasks_start.write(|w| unsafe { w.bits(1) });
+
+		while spim0.events_endtx.read().bits() == 0 {};
 	});
 }
 

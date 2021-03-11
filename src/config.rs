@@ -39,6 +39,10 @@ pub const SPI_ORDER: spi0::config::ORDER_A = spi0::config::ORDER_A::MSBFIRST;
 pub const SPI_MOSI_PIN: u8 			= 3;
 pub const SPI_MISO_PIN: u8 			= 4;
 pub const SPI_SCLK_PIN: u8 			= 2;
+pub const SPIM_RX_BANKA: usize		= 0x2000_0000;
+// pub const SPIM_RX_BANKB: usize		= 0x2000_0100;
+pub const SPIM_TX_BANKA: usize		= 0x2000_0200;
+// pub const SPIM_TX_BANKB: usize		= 0x2000_0300;
 
 #[allow(dead_code)] pub const TOUCH_I2C_SDA_PIN: u8 	= I2C_SDA_PIN;
 #[allow(dead_code)] pub const TOUCH_I2C_SCL_PIN: u8 	= I2C_SCL_PIN;
