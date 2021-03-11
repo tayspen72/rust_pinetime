@@ -27,7 +27,7 @@ pub struct MinimalCharacter {
 // Variables
 //==============================================================================
 #[allow(dead_code)]
-const MINIMAL_CHARACTER_LIST: [MinimalCharacter; 69] = [
+const MINIMAL_CHARACTER_LIST: [MinimalCharacter; 71] = [
 	MinimalCharacter { bytes: [ 0x22, 0xA3, 0x1F, 0xC6, 0x20 ] },	// A
 	MinimalCharacter { bytes: [ 0xF4, 0x63, 0xE8, 0xC7, 0xC0 ] },	// B
 	MinimalCharacter { bytes: [ 0x74, 0x61, 0x08, 0x45, 0xC0 ] },	// C
@@ -99,7 +99,9 @@ const MINIMAL_CHARACTER_LIST: [MinimalCharacter; 69] = [
 	MinimalCharacter { bytes: [ 0x21, 0x08, 0x42, 0x00, 0x80 ] },	// !
 	MinimalCharacter { bytes: [ 0x00, 0x14, 0x45, 0x00, 0x00 ] },	// *
 	MinimalCharacter { bytes: [ 0x00, 0x01, 0xF0, 0x00, 0x00 ] },	// -
-	MinimalCharacter { bytes: [ 0x00, 0x08, 0x02, 0x00, 0x00 ] }	// :
+	MinimalCharacter { bytes: [ 0x00, 0x08, 0x02, 0x00, 0x00 ] },	// :
+	MinimalCharacter { bytes: [ 0x72, 0x10, 0x84, 0x21, 0xC0 ] },	// [
+	MinimalCharacter { bytes: [ 0x70, 0x84, 0x21, 0x09, 0xC0 ] }	// ]
 ];
 
 pub const MINIMAL_CHARACTER_WIDTH: u16 = 5;
@@ -180,6 +182,8 @@ fn get_minimal_character(c: char) -> &'static MinimalCharacter {
 		'*' => &MINIMAL_CHARACTER_LIST[66],
 		'-' => &MINIMAL_CHARACTER_LIST[67],
 		':' => &MINIMAL_CHARACTER_LIST[68],
+		'[' => &MINIMAL_CHARACTER_LIST[69],
+		']' => &MINIMAL_CHARACTER_LIST[70],
 		_ => &MinimalCharacter { bytes: [0x00, 0x00, 0x00, 0x00, 0x00] }
 	}
 }
