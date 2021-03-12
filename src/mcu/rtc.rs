@@ -38,7 +38,6 @@ static RTC_HANDLE: Mutex<RefCell<Option<nrf52832_pac::RTC0>>> =
 //==============================================================================
 #[allow(dead_code)]
 pub fn init(rtc: nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK, interval: WakeInterval) {
-
 	free(|cs| _WAKE_INTERVAL.borrow(cs).set(interval as u32));
 
 	// Enable after HANDLE has been initialized so the mutex is not 'None'
@@ -110,6 +109,10 @@ fn configure(rtc: &nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK) {
 	free(|cs| _SECONDS.borrow(cs).set(0));
 	free(|cs| _FRACTION.borrow(cs).set(0));
 }
+
+
+#[allow(dead_code)]
+fn empty_function(){}
 
 // =============================================================================
 // Interrupt Handler

@@ -8,6 +8,7 @@
 //==============================================================================
 pub mod app;
 pub mod button;
+pub mod clock;
 pub mod debug;
 pub mod lcd;
 pub mod touch;

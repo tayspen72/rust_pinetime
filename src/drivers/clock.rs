@@ -1,72 +1,86 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// main.rs
+// drivers::clock.rs
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-#![no_std]
-#![no_main]
-
-use cortex_m_rt::entry;
-use panic_halt as _; // Breakpoint on `rust_begin_unwind` to catch panics
-
-mod config;
-mod drivers;
-use drivers::*;
-mod mcu;
+use core::cell::Cell;
+use cortex_m::interrupt::{free, Mutex};
+use crate::drivers::app;
+use crate::mcu::rtc;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-
+#[derive(Clone, Copy)]
+pub struct Time {
+	pub hours: u8,
+	pub minutes: u8,
+	pub seconds: u8
+}
 
 //==============================================================================
 // Variables
 //==============================================================================
+static TIME: Mutex<Cell<Time>> = Mutex::new(Cell::new( Time {
+	hours: 0,
+	minutes: 0,
+	seconds: 0
+}));
 
 
 //==============================================================================
-// Main
+// Public Functions
 //==============================================================================
-#[entry]
-fn main() -> ! {
+pub fn init() {
 
-	init();
-	
-	let mut device_info = app::DeviceInfo::take().unwrap();
-
-	loop {
-		task_handler(&mut device_info);
-	};
 }
 
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn init() {
-	mcu::init(mcu::rtc::WakeInterval::Interval250MS);
+fn update_add_second() {
+	free(|cs| {
+		let mut time = TIME.borrow(cs).get();
+		time.seconds += 1;
 
-	lcd::lcd_api::init();
-	debug::init();
-	
-	button::init();
-	clock::init();
-	// touch::init(p);
+		if time.seconds >= 60 {
+			time.seconds = 0;
+			time.minutes += 1;
+		
+			if time.minutes >= 60 {
+				time.minutes = 0;
+				time.hours += 1;
+				
+				if time.hours >= 24 {
+					time.hours = 0;
+				}
+			}
+		}
+
+		TIME.borrow(cs).set(time);
+	});
 }
+
+//==============================================================================
+// Interrupt Handler
+//==============================================================================
+
 
 //==============================================================================
 // Task Handler
 //==============================================================================
-fn task_handler(d: &mut app::DeviceInfo) {
-	mcu::task_handler(d);
-	
-	debug::task_handler(d);
-	// button::task_handler();
-	clock::task_handler(d);
-	// lcd::lcd_api::task_handler();
-	// touch::task_handler();
+pub fn task_handler(d: &mut app::DeviceInfo) {
+	static mut LAST_TIMESTAMP: u32 = 0;
 
-	app::task_handler();
+	unsafe {
+		if rtc::get_timediff(LAST_TIMESTAMP) >= 1 {
+			LAST_TIMESTAMP = rtc::get_timestamp();
+			update_add_second();
+			d.time = free(|cs| TIME.borrow(cs).get());
+		}
+	}
+
 }

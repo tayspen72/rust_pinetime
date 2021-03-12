@@ -7,7 +7,7 @@
 // Crates and Mods
 //==============================================================================
 use cortex_m::asm::wfi;
-
+use crate::drivers;
 pub mod app;
 
 //==============================================================================
@@ -18,7 +18,8 @@ pub struct DeviceInfoFlags{
 }
 
 pub struct DeviceInfo {
-	pub flags: DeviceInfoFlags
+	pub flags: DeviceInfoFlags,
+    pub time: drivers::clock::Time,
 }
 
 pub enum AppState {
@@ -31,6 +32,17 @@ pub enum AppState {
 // Variables
 //==============================================================================
 static mut DEVICE_INFO: bool = false;
+
+const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
+    flags: DeviceInfoFlags {
+        debug_log_active: true 
+    },
+    time: drivers::clock::Time {
+        hours: 0,
+        minutes: 0, 
+        seconds: 0
+    }
+};
 
 //==============================================================================
 // Public Functions
@@ -47,11 +59,7 @@ impl DeviceInfo {
     }
 	pub unsafe fn steal() -> Self {
 		DEVICE_INFO = true;
-        DeviceInfo {
-			flags: DeviceInfoFlags { 
-				debug_log_active: true 
-			}
-		}
+        DEVICE_INFO_DEFAULTS
 	}
 }
 
