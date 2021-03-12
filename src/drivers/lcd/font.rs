@@ -17,11 +17,15 @@ use super::{lcd, lcd_api, st7789};
 
 //==============================================================================
 // Enums, Structs, and Types
-//==============================================================================\
-#[allow(dead_code)]
+//==============================================================================
 pub struct MinimalCharacter {
 	bytes: [u8; 5]
 }
+
+pub struct TimeCharacter {
+	bytes: [u8; 320]
+}
+
 
 //==============================================================================
 // Variables
@@ -106,6 +110,21 @@ const MINIMAL_CHARACTER_LIST: [MinimalCharacter; 71] = [
 
 pub const MINIMAL_CHARACTER_WIDTH: u16 = 5;
 pub const MINIMAL_CHARACTER_HEIGHT: u16 = 8;
+
+#[allow(dead_code)]
+const TIME_CHARACTER_LIST: [TimeCharacter; 10] = [
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 0
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 1
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 2
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 3
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 4
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 5
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 6
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 7
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 8
+	TimeCharacter { bytes: [ 0x00; 320 ] },	// 9
+];
+
 
 //==============================================================================
 // Public Functions
