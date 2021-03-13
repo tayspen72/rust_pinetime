@@ -92,6 +92,7 @@ pub fn push_log(string: &'static str) {
 	});
 }
 
+#[allow(dead_code)]
 pub fn push_log_number(string: &'static str, num: &u32) {
 	if free(|cs| LOG_LINES_ACTIVE.borrow(cs).get()) == LOG_LINE_ENTRIES {
 		pop_log();
