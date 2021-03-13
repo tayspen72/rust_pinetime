@@ -10,7 +10,6 @@ use core::cell::{Cell, RefCell};
 use cortex_m::interrupt::{free, Mutex};
 use nrf52832_pac;
 use nrf52832_pac::interrupt;
-use crate::drivers::debug;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -148,14 +147,5 @@ fn RTC0() {
 // Task Handler
 //==============================================================================
 pub fn task_handler(){
-	const UPDATE_FREQUENCY_SECONDS: u32 = 2;
-	static mut LAST_TIMESTAMP: u32 = 0;
-	
-	unsafe {
-		let time_diff = get_timediff(LAST_TIMESTAMP);
-		if time_diff >= UPDATE_FREQUENCY_SECONDS {
-			LAST_TIMESTAMP = get_timestamp();
-			debug::push_log_number("Next second: ", &LAST_TIMESTAMP);
-		}
-	}
+
 }
