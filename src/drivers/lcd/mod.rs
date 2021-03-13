@@ -13,6 +13,7 @@
 // Enums, Structs, and Types
 //==============================================================================
 pub mod font;
+pub mod images;
 pub mod lcd;
 pub mod lcd_api;
 mod st7789;

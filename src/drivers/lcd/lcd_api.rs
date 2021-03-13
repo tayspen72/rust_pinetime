@@ -8,7 +8,7 @@
 //==============================================================================
 // use crate::config;
 // use crate::mcu::spi;
-use super::{lcd, st7789};
+use super::{images, lcd, st7789};
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -58,6 +58,7 @@ pub fn init() {
 	// fill_background(p, Color::Purple as u16);
 	fill_background(Color::Black as u16);
 	lcd::set_backlight(lcd::BacklightBrightness::Brightness7);
+	write_image();
 }
 
 pub fn get_busy() -> bool {
@@ -98,6 +99,12 @@ pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
 		((y & 0xFF00) >> 8) as u8, (y & 0x00FF) as u8,
 		((y_end & 0xFF00) >> 8) as u8, (y_end & 0x00FF) as u8,
 	]);
+}
+
+fn write_image() {
+	set_window(0, 80, 0, 53);
+	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
+	lcd::write_data(&images::RUSTACEAN);
 }
 
 //==============================================================================
