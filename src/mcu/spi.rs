@@ -8,12 +8,12 @@
 //==============================================================================
 use core::cell::{Cell, RefCell};
 use cortex_m::interrupt::{free, Mutex};
-use nrf52832_pac::spi0;
+use nrf52832_pac::spim0;
 use crate::config;
 use crate::mcu::gpio;
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
 use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
-// use core::ptr;
+use core::ptr;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -23,10 +23,10 @@ pub struct SpiLine{
 	pub sclk_pin: u8,
 	pub mosi_pin: u8,
 	pub miso_pin: u8,
-	pub frequency: spi0::frequency::FREQUENCY_A,
-	pub order: spi0::config::ORDER_A,
-	pub cpha: spi0::config::CPHA_A,
-	pub cpol: spi0::config::CPOL_A
+	pub frequency: spim0::frequency::FREQUENCY_A,
+	pub order: spim0::config::ORDER_A,
+	pub cpha: spim0::config::CPHA_A,
+	pub cpol: spim0::config::CPOL_A
 }
 
 #[derive(Clone, Copy)]
@@ -50,8 +50,6 @@ const SPI_LINE: SpiLine = SpiLine {
 	cpol: config::SPI_CPOL,
 };
 
-static SPI_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPI0>>> = 
-	Mutex::new(RefCell::new(None));
 static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> = 
 	Mutex::new(RefCell::new(None));
 
@@ -59,10 +57,9 @@ static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> =
 // Public Functions
 //==============================================================================
 #[allow(dead_code)]
-pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
-	configure(&spi0);
+pub fn init(spim0: nrf52832_pac::SPIM0) {
+	configure(&spim0);
 
-	free(|cs| SPI_HANDLE.borrow(cs).replace(Some(spi0)));
 	free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(spim0)));
 }
 
@@ -79,8 +76,8 @@ pub fn setup_block(block: &[u8]) {
 	// Toggle the active bank
 	toggle_spim_bank();
 
-	// for i in 0..block.len() {
-	// 	unsafe { ptr::write((tx_ptr+i) as *mut u8, block[i]) }; }
+	for i in 0..block.len() {
+		unsafe { ptr::write((tx_ptr+i) as *mut u8, block[i]) }; }
 
 	free(|cs| {
 		let spi = SPIM_HANDLE.borrow(cs).borrow();
@@ -106,42 +103,23 @@ pub fn start_block() {
 	});
 }
 
-#[allow(dead_code)]
-pub fn tx_byte(byte: u8) {
-	free(|cs| {
-		let spi = SPI_HANDLE.borrow(cs).borrow();
-		let spi0 = spi.as_ref().unwrap();
-
-		spi0.txd.write(|w| unsafe { w.txd().bits(byte) });
-
-		while spi0.events_ready.read().bits() == 0 {};
-		spi0.events_ready.write(|w| unsafe { w.bits(0) });
-
-		spi0.rxd.read().bits();
-	});
-}
-
+// Used in spi transmits less that 256B
 #[allow(dead_code)]
 pub fn tx_data(data: &[u8]) {
-	free(|cs| {
-		let spi = SPI_HANDLE.borrow(cs).borrow();
-		let spi0 = spi.as_ref().unwrap();
+	// Setup RAM buffer with data to be transmit and dma registers with config
+	setup_block(data);
 
-		for i in 0..data.len() {
-			spi0.txd.write(|w| unsafe { w.txd().bits(data[i]) });
+	// Start the transfer
+	start_block();
 
-			while spi0.events_ready.read().bits() == 0 {};
-			spi0.events_ready.write(|w| unsafe { w.bits(0) });
-
-			spi0.rxd.read().bits();
-		}
-	});
+	// Wait for transfer to complete
+	while get_busy_dma() {};
 }
 
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn configure(spi: &nrf52832_pac::SPI0) {
+fn configure(spi: &nrf52832_pac::SPIM0) {
 	spi.enable.write(|w| w.enable().disabled());
 
 	// Configure MOSI pin

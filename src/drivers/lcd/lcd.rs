@@ -71,7 +71,7 @@ pub fn write_command(command: st7789::COMMAND) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinLow);
 
-	spi::tx_byte(command as u8);
+	spi::tx_data(&[command as u8]);
 
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
