@@ -6,14 +6,14 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use core::cell::RefCell;
+use core::cell::{Cell, RefCell};
 use cortex_m::interrupt::{free, Mutex};
 use nrf52832_pac::spi0;
 use crate::config;
 use crate::mcu::gpio;
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
 use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
-use core::ptr;
+// use core::ptr;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -29,11 +29,16 @@ pub struct SpiLine{
 	pub cpol: spi0::config::CPOL_A
 }
 
+#[derive(Clone, Copy)]
+enum ActiveBank {
+	BankA,
+	BankB
+}
+
 //==============================================================================
 // Variables
 //==============================================================================
-const SPIM_RX_PTR: usize = config::SPIM_RX_BANKA;
-const SPIM_TX_PTR: usize = config::SPIM_TX_BANKA;
+const SPIM_ACTIVE_BANK: Mutex<Cell<ActiveBank>> = Mutex::new(Cell::new(ActiveBank::BankB));
 
 const SPI_LINE: SpiLine = SpiLine {
 	sclk_pin: config::SPI_SCLK_PIN,
@@ -62,22 +67,42 @@ pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
 }
 
 #[allow(dead_code)]
-pub fn tx_block(block: &[u8]) {
-	unsafe { for i in 0..block.len() {
-		ptr::write((SPIM_TX_PTR+i) as *mut u8, block[i]);
-	} }
+pub fn get_busy_dma() -> bool {
+	free(|cs| SPIM_HANDLE.borrow(cs).borrow().as_ref().unwrap().events_started.read().bits()) != 0
+}
+
+#[allow(dead_code)]
+pub fn setup_block(block: &[u8]) {
+	// Pull ptrs to the open RAM banks
+	let (rx_ptr, tx_ptr): (usize, usize) = get_open_spim_bank();
+	
+	// Toggle the active bank
+	toggle_spim_bank();
+
+	// for i in 0..block.len() {
+	// 	unsafe { ptr::write((tx_ptr+i) as *mut u8, block[i]) }; }
+
+	free(|cs| {
+		let spi = SPIM_HANDLE.borrow(cs).borrow();
+		let spim0 = spi.as_ref().unwrap();
+
+		spim0.rxd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
+		spim0.rxd.ptr.write(|w| unsafe { w.ptr().bits(rx_ptr as u32) });
+		spim0.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
+		spim0.txd.ptr.write(|w| unsafe { w.ptr().bits(tx_ptr as u32) });
+	});
+}
+
+#[allow(dead_code)]
+pub fn start_block() {
+	while get_busy_dma() {}
 
 	free(|cs| {
 		let spim = SPIM_HANDLE.borrow(cs).borrow();
 		let spim0 = spim.as_ref().unwrap();
-		spim0.rxd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
-		spim0.rxd.ptr.write(|w| unsafe { w.ptr().bits(SPIM_RX_PTR as u32) });
-		spim0.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
-		spim0.txd.ptr.write(|w| unsafe { w.ptr().bits(SPIM_TX_PTR as u32) });
 
-		spim0.tasks_start.write(|w| unsafe { w.bits(1) });
-
-		while spim0.events_endtx.read().bits() == 0 {};
+		spim0.events_endtx.write(|w| unsafe { w.bits(0) });
+		spim0.tasks_start.write(|w| unsafe { w.bits(1) });		
 	});
 }
 
@@ -90,6 +115,7 @@ pub fn tx_byte(byte: u8) {
 		spi0.txd.write(|w| unsafe { w.txd().bits(byte) });
 
 		while spi0.events_ready.read().bits() == 0 {};
+		spi0.events_ready.write(|w| unsafe { w.bits(0) });
 
 		spi0.rxd.read().bits();
 	});
@@ -105,6 +131,7 @@ pub fn tx_data(data: &[u8]) {
 			spi0.txd.write(|w| unsafe { w.txd().bits(data[i]) });
 
 			while spi0.events_ready.read().bits() == 0 {};
+			spi0.events_ready.write(|w| unsafe { w.bits(0) });
 
 			spi0.rxd.read().bits();
 		}
@@ -139,6 +166,23 @@ fn configure(spi: &nrf52832_pac::SPI0) {
 	spi.enable.write(|w| w.enable().enabled());
 }
 
+fn get_open_spim_bank() -> (usize, usize) {
+	match free(|cs| SPIM_ACTIVE_BANK.borrow(cs).get()) {
+		ActiveBank::BankA => (config::SPIM_RX_BANKB, config::SPIM_TX_BANKB),
+		ActiveBank::BankB => (config::SPIM_RX_BANKA, config::SPIM_TX_BANKA),
+	}
+}
+
+fn toggle_spim_bank() {
+	free(|cs| SPIM_ACTIVE_BANK.borrow(cs).set(
+		if let ActiveBank::BankA = SPIM_ACTIVE_BANK.borrow(cs).get() {
+			ActiveBank::BankB
+		}
+		else {
+			ActiveBank::BankA
+		}
+	));
+}
 //==============================================================================
 // Interrupt Handler
 //==============================================================================
