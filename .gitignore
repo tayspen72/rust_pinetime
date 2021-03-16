@@ -1,4 +1,8 @@
 # Files to maintain removed 
-target
-Cargo.lock
-.idea
+# Block out the Rust build files and vscode configs
+app/target
+app/Cargo.lock
+app/.idea
+
+# Exlude the C Library object files
+nrf52832_lib/Output
