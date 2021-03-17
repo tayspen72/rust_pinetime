@@ -99,13 +99,13 @@ pub fn write_block(data: &[u8]) {
 		num_bytes -= transfer_size;
 
 		spi::setup_block(&data[index..index+transfer_size]);
-		while !spi::get_busy_dma() {}
 		spi::start_block();
 
 		index += transfer_size
 	}
 
 	while spi::get_busy_dma() {}
+	spi::dma_cleanup();
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }

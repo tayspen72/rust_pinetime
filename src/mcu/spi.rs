@@ -8,7 +8,7 @@
 //==============================================================================
 use core::cell::{Cell, RefCell};
 use cortex_m::interrupt::{free, Mutex};
-use nrf52832_pac::spim0;
+use nrf52832_pac::spi0;
 use crate::config;
 use crate::mcu::gpio;
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
@@ -23,10 +23,10 @@ pub struct SpiLine{
 	pub sclk_pin: u8,
 	pub mosi_pin: u8,
 	pub miso_pin: u8,
-	pub frequency: spim0::frequency::FREQUENCY_A,
-	pub order: spim0::config::ORDER_A,
-	pub cpha: spim0::config::CPHA_A,
-	pub cpol: spim0::config::CPOL_A
+	pub frequency: spi0::frequency::FREQUENCY_A,
+	pub order: spi0::config::ORDER_A,
+	pub cpha: spi0::config::CPHA_A,
+	pub cpol: spi0::config::CPOL_A
 }
 
 #[derive(Clone, Copy)]
@@ -49,6 +49,8 @@ const SPI_LINE: SpiLine = SpiLine {
 	cpha: config::SPI_CPHA,
 	cpol: config::SPI_CPOL,
 };
+static SPI_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPI0>>> = 
+	Mutex::new(RefCell::new(None));
 
 static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> = 
 	Mutex::new(RefCell::new(None));
@@ -57,35 +59,59 @@ static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> =
 // Public Functions
 //==============================================================================
 #[allow(dead_code)]
-pub fn init(spim0: nrf52832_pac::SPIM0) {
-	configure(&spim0);
+pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
+	configure(&spi0);
 
+	free(|cs| SPI_HANDLE.borrow(cs).replace(Some(spi0)));
 	free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(spim0)));
+}
+
+pub fn dma_cleanup() {
+	free(|cs| {
+		let spim = SPIM_HANDLE.borrow(cs).borrow();
+		let spim0 = spim.as_ref().unwrap();
+
+		spim0.events_endrx.write(|w| unsafe { w.bits(0) });
+		spim0.events_end.write(|w| unsafe { w.bits(0) });
+		spim0.events_endtx.write(|w| unsafe { w.bits(0) });
+		spim0.events_started.write(|w| unsafe { w.bits(0) });		
+	});
 }
 
 #[allow(dead_code)]
 pub fn get_busy_dma() -> bool {
-	free(|cs| SPIM_HANDLE.borrow(cs).borrow().as_ref().unwrap().events_started.read().bits()) != 0
+	let busy = free(|cs| {
+		let spim = SPIM_HANDLE.borrow(cs).borrow();
+		let spim0 = spim.as_ref().unwrap();
+
+		(spim0.events_started.read().bits() != 0) && 
+		(spim0.events_endtx.read().bits() == 0)
+	});
+
+	busy
 }
 
 #[allow(dead_code)]
-pub fn setup_block(block: &[u8]) {
+pub fn setup_block(block: &[u8]){
 	// Pull ptrs to the open RAM banks
 	let (rx_ptr, tx_ptr): (usize, usize) = get_open_spim_bank();
-	
+	let len = if block.len() > 256 { 256 } else { block.len() };
 	// Toggle the active bank
 	toggle_spim_bank();
 
-	for i in 0..block.len() {
-		unsafe { ptr::write((tx_ptr+i) as *mut u8, block[i]) }; }
+	for i in 0..len {
+		unsafe { 
+			ptr::write((tx_ptr+i) as *mut u8, block[i]);
+		}
+	}
 
 	free(|cs| {
 		let spi = SPIM_HANDLE.borrow(cs).borrow();
 		let spim0 = spi.as_ref().unwrap();
 
-		spim0.rxd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
+		spim0.rxd.maxcnt.write(|w| unsafe { w.maxcnt().bits(len as u8) });
 		spim0.rxd.ptr.write(|w| unsafe { w.ptr().bits(rx_ptr as u32) });
-		spim0.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(block.len() as u8) });
+		spim0.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(len as u8) });
 		spim0.txd.ptr.write(|w| unsafe { w.ptr().bits(tx_ptr as u32) });
 	});
 }
@@ -93,33 +119,50 @@ pub fn setup_block(block: &[u8]) {
 #[allow(dead_code)]
 pub fn start_block() {
 	while get_busy_dma() {}
+	dma_cleanup();
 
 	free(|cs| {
 		let spim = SPIM_HANDLE.borrow(cs).borrow();
 		let spim0 = spim.as_ref().unwrap();
 
-		spim0.events_endtx.write(|w| unsafe { w.bits(0) });
 		spim0.tasks_start.write(|w| unsafe { w.bits(1) });		
 	});
 }
 
-// Used in spi transmits less that 256B
+#[allow(dead_code)]
+pub fn tx_byte(byte: u8) {
+	free(|cs| {
+		let spi = SPI_HANDLE.borrow(cs).borrow();
+		let spi0 = spi.as_ref().unwrap();
+
+		spi0.txd.write(|w| unsafe { w.txd().bits(byte) });
+
+		while spi0.events_ready.read().bits() == 0 {};
+
+		spi0.rxd.read().bits();
+	});
+}
+
 #[allow(dead_code)]
 pub fn tx_data(data: &[u8]) {
-	// Setup RAM buffer with data to be transmit and dma registers with config
-	setup_block(data);
+	free(|cs| {
+		let spi = SPI_HANDLE.borrow(cs).borrow();
+		let spi0 = spi.as_ref().unwrap();
 
-	// Start the transfer
-	start_block();
+		for i in 0..data.len() {
+			spi0.txd.write(|w| unsafe { w.txd().bits(data[i]) });
 
-	// Wait for transfer to complete
-	while get_busy_dma() {};
+			while spi0.events_ready.read().bits() == 0 {};
+
+			spi0.rxd.read().bits();
+		}
+	});
 }
 
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn configure(spi: &nrf52832_pac::SPIM0) {
+fn configure(spi: &nrf52832_pac::SPI0) {
 	spi.enable.write(|w| w.enable().disabled());
 
 	// Configure MOSI pin
@@ -161,6 +204,7 @@ fn toggle_spim_bank() {
 		}
 	));
 }
+
 //==============================================================================
 // Interrupt Handler
 //==============================================================================
