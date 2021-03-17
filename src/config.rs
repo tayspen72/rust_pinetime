@@ -6,7 +6,7 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use nrf52832_pac::{twi0, spi0, uart0};
+use nrf52832_pac::{twi0, spim0, uart0};
 
 //==============================================================================
 // Accelerometer
@@ -52,17 +52,17 @@ pub const PUSH_BUTTON_OUT_PIN: u8 	= 15;
 //==============================================================================
 // SPI
 //==============================================================================
-pub const SPI_CPHA: spi0::config::CPHA_A = spi0::config::CPHA_A::TRAILING;
-pub const SPI_CPOL: spi0::config::CPOL_A = spi0::config::CPOL_A::ACTIVELOW;
-pub const SPI_FREQUENCY: spi0::frequency::FREQUENCY_A = spi0::frequency::FREQUENCY_A::M8;
-pub const SPI_ORDER: spi0::config::ORDER_A = spi0::config::ORDER_A::MSBFIRST;
+pub const SPI_CPHA: spim0::config::CPHA_A = spim0::config::CPHA_A::TRAILING;
+pub const SPI_CPOL: spim0::config::CPOL_A = spim0::config::CPOL_A::ACTIVELOW;
+pub const SPI_FREQUENCY: spim0::frequency::FREQUENCY_A = spim0::frequency::FREQUENCY_A::M8;
+pub const SPI_ORDER: spim0::config::ORDER_A = spim0::config::ORDER_A::MSBFIRST;
 pub const SPI_MOSI_PIN: u8 			= 3;
 pub const SPI_MISO_PIN: u8 			= 4;
 pub const SPI_SCLK_PIN: u8 			= 2;
 pub const SPIM_RX_BANKA: usize		= 0x2000_0000;
-// pub const SPIM_RX_BANKB: usize		= 0x2000_0100;
+pub const SPIM_RX_BANKB: usize		= 0x2000_0100;
 pub const SPIM_TX_BANKA: usize		= 0x2000_0200;
-// pub const SPIM_TX_BANKB: usize		= 0x2000_0300;
+pub const SPIM_TX_BANKB: usize		= 0x2000_0300;
 
 //==============================================================================
 // Touch Sensor

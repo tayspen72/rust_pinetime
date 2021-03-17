@@ -39,7 +39,7 @@ pub fn init(wake_interval: rtc::WakeInterval) {
 
 	i2c::init(peripherals.TWI0);
 	rtc::init(peripherals.RTC0, &peripherals.CLOCK, wake_interval);
-	spi::init(peripherals.SPI0, peripherals.SPIM0);
+	spi::init(peripherals.SPIM0);
 	timer::init(peripherals.TIMER0);
 
 }

@@ -59,6 +59,7 @@ pub fn init() {
 	fill_background(Color::Black as u16);
 	lcd::set_backlight(lcd::BacklightBrightness::Brightness7);
 	write_image();
+	write_image_dma();
 }
 
 pub fn get_busy() -> bool {
@@ -105,6 +106,12 @@ fn write_image() {
 	set_window(0, 80, 0, 53);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	lcd::write_data(&images::RUSTACEAN);
+}
+
+fn write_image_dma() {
+	set_window(159, 80, 0, 53);
+	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
+	lcd::write_block(&images::RUSTACEAN);
 }
 
 //==============================================================================

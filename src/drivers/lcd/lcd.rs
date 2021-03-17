@@ -71,7 +71,7 @@ pub fn write_command(command: st7789::COMMAND) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinLow);
 
-	spi::tx_byte(command as u8);
+	spi::tx_data(&[command as u8]);
 
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
@@ -82,6 +82,30 @@ pub fn write_data(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
 	spi::tx_data(data);
+
+	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
+}
+
+pub fn write_block(data: &[u8]) {
+	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
+	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
+
+	while spi::get_busy_dma() {}
+
+	let mut num_bytes = data.len();
+	let mut index = 0;
+	while num_bytes > 0 {
+		let transfer_size = if num_bytes > 256 { 256 } else { num_bytes };
+		num_bytes -= transfer_size;
+
+		spi::setup_block(&data[index..index+transfer_size]);
+		while !spi::get_busy_dma() {}
+		spi::start_block();
+
+		index += transfer_size
+	}
+
+	while spi::get_busy_dma() {}
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }
