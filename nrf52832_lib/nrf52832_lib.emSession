@@ -57,16 +57,19 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/gpio.c" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="65" y="40" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/rtc.c" selected="1" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/input.c" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="8" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/spi.c" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/spi.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/gpio.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/input.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="164" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../.segger/SEGGER Embedded Studio/v3/packages/nRF/Device/Include/nrf52.h" selected="0" top="125" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/lib.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditRight" x="0" y="11" useTextEdit="1" openedFrom="/home/tayspen72/Projects/rust_pinetime/nrf52832_lib/src/rtc.c" useBinaryEdit="0" left="19" path="inc/rtc.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="50" y="37" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/gpio.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="34" y="27" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/rtc.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="62" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/input.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="17" y="9" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/spi.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="21" y="12" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/spi.h" selected="0" top="12" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="7" y="36" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/gpio.h" selected="0" top="12" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="18" y="24" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/input.h" selected="0" top="21" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="15" y="149" useTextEdit="1" openedFrom="/home/tayspen72/Projects/rust_pinetime/nrf52832_lib/inc/lib.h" useBinaryEdit="0" left="0" path="../../../.segger/SEGGER Embedded Studio/v3/packages/nRF/Device/Include/nrf52.h" selected="0" top="120" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="13" y="11" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/lib.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11" useTextEdit="1" openedFrom="/home/tayspen72/Projects/rust_pinetime/nrf52832_lib/src/rtc.c" useBinaryEdit="0" left="0" path="inc/rtc.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="69" y="176" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/softFifo.c" selected="0" top="146" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="95" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="inc/softFifo.h" selected="0" top="84" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="/home/tayspen72/.segger/SEGGER Embedded Studio/v3/packages/nRF/Device/Include/nrf52.h" useBinaryEdit="0" left="0" path="../../../.segger/SEGGER Embedded Studio/v3/packages/CMSIS_5/CMSIS/Core/Include/core_cm4.h" selected="1" top="3" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="nrf52832_lib" fileDialogDefaultFilter="*.c;*.cpp;*.cxx;*.cc;*.h;*.hpp;*.hxx" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="/home/tayspen72/Projects/rust_pinetime/nrf52832_lib/inc" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <ARMCrossStudioWindow activeProject="nrf52832_lib" fileDialogDefaultFilter="*.c;*.cpp;*.cxx;*.cc;*.h;*.hpp;*.hxx" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="/home/tayspen72/Projects/rust_pinetime/nrf52832_lib/src" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

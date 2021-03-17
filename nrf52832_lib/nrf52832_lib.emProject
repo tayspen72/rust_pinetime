@@ -32,6 +32,7 @@
       <file file_name="src/rtc.c" />
       <file file_name="src/input.c" />
       <file file_name="src/spi.c" />
+      <file file_name="src/softFifo.c" />
     </folder>
     <folder Name="inc">
       <file file_name="inc/gpio.h" />
@@ -39,6 +40,7 @@
       <file file_name="inc/rtc.h" />
       <file file_name="inc/spi.h" />
       <file file_name="inc/lib.h" />
+      <file file_name="inc/softFifo.h" />
     </folder>
     <configuration
       Name="Debug"

@@ -95,8 +95,7 @@ void RTC_ScheduleStart(RtcSchedule_t *schedule, uint32_t seconds, void *callBack
 // Private Functions
 //==============================================================================
 static void rtc_initMcu(uint8_t enable){			
-	if(enable)
-	{
+	if(enable){
 		//start the RTC
 		NRF_CLOCK->LFCLKSRC = 0x01;	//configured for external XTAL on RTC
 		NRF_CLOCK->TASKS_LFCLKSTART = 1;	
@@ -119,8 +118,7 @@ static void rtc_initMcu(uint8_t enable){
 		//Enable RTC
 		NRF_RTC0->TASKS_START = 1;
 	}
-	else
-	{
+	else{
 		NRF_RTC0->TASKS_STOP = 1;
 		NRF_RTC0->TASKS_CLEAR = 0;
 		_initialized = false;
@@ -145,8 +143,7 @@ static void rtc_scheduleAdd(RtcSchedule_t *schedule){
 	
 	if(lastSchedule == NULL)
 		_firstSchedule = schedule;
-	else
-	{
+	else{
 		while(lastSchedule->NextSchedule)
 			lastSchedule = lastSchedule->NextSchedule;
 		
@@ -160,8 +157,7 @@ static uint8_t rtc_scheduleExists(RtcSchedule_t *schedule){
 	if(s == NULL)
 		return false;
 	
-	for(; s; s = s->NextSchedule)
-	{
+	for(; s; s = s->NextSchedule){
 		if(s == schedule)
 			return true;
 	}
@@ -188,8 +184,7 @@ void RTC_ScheduleTaskHandler(){
 		return;
 	
 	RtcSchedule_t *s = _firstSchedule;
-	while (s)
-	{
+	while (s){
 		if(s->State == SCHEDULE_RUNNING && s->NextTime <= seconds)
 		{
 			scheduleCbFunction func = (scheduleCbFunction)s->CallbackFunc;
@@ -206,13 +201,10 @@ void RTC_ScheduleTaskHandler(){
 //==============================================================================
 // Interrupt Handler
 //==============================================================================
-void RTC0_IRQHandler(void)
-{
-	if(NRF_RTC0->EVENTS_COMPARE[0])
-	{
+void RTC0_IRQHandler(void){
+	if(NRF_RTC0->EVENTS_COMPARE[0]){
 		_fraction += _interval;
-		if(_fraction >= RTC_WAKE_INTERVAL_1S)
-		{
+		if(_fraction >= RTC_WAKE_INTERVAL_1S)	{
 			_seconds += (_fraction / RTC_WAKE_INTERVAL_1S);
 			_fraction = 0;
 		}
