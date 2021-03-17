@@ -7,6 +7,7 @@
 // Crates and Mods
 //==============================================================================
 use core::cell::{Cell, RefCell};
+use core::ops::DerefMut;
 use cortex_m::interrupt::{free, Mutex};
 use nrf52832_pac;
 use nrf52832_pac::interrupt;
@@ -123,20 +124,19 @@ fn RTC0() {
 	let wake_interval: u32 = free(|cs| _WAKE_INTERVAL.borrow(cs).get());
 
 	free(|cs| {
-		let rtc = RTC_HANDLE.borrow(cs).borrow();
-		let rtc0 = rtc.as_ref().unwrap();
-
-		if rtc0.events_compare[0].read().bits() > 0 {
-				fraction += wake_interval;
-		
-			if fraction >= WakeInterval::Interval1S as u32 {
-				seconds += fraction / WakeInterval::Interval1S as u32;
-				fraction = 0;
+		if let Some(ref mut rtc) = RTC_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			if rtc.events_compare[0].read().bits() > 0 {
+					fraction += wake_interval;
+			
+				if fraction >= WakeInterval::Interval1S as u32 {
+					seconds += fraction / WakeInterval::Interval1S as u32;
+					fraction = 0;
+				}
 			}
-		}
 
-		rtc0.events_compare[0].write(|w| unsafe { w.bits(0) });
-		rtc0.tasks_clear.write(|w| unsafe { w.bits(1) });
+			rtc.events_compare[0].write(|w| unsafe { w.bits(0) });
+			rtc.tasks_clear.write(|w| unsafe { w.bits(1) });
+		}
 	});
 
 	free(|cs| _FRACTION.borrow(cs).set(fraction));

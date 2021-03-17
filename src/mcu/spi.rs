@@ -7,6 +7,7 @@
 // Crates and Mods
 //==============================================================================
 use core::cell::{Cell, RefCell};
+use core::ops::DerefMut;
 use cortex_m::interrupt::{free, Mutex};
 use nrf52832_pac::spi0;
 use crate::config;
@@ -68,27 +69,26 @@ pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
 
 pub fn dma_cleanup() {
 	free(|cs| {
-		let spim = SPIM_HANDLE.borrow(cs).borrow();
-		let spim0 = spim.as_ref().unwrap();
-
-		spim0.events_endrx.write(|w| unsafe { w.bits(0) });
-		spim0.events_end.write(|w| unsafe { w.bits(0) });
-		spim0.events_endtx.write(|w| unsafe { w.bits(0) });
-		spim0.events_started.write(|w| unsafe { w.bits(0) });		
+		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			spim.events_endrx.write(|w| unsafe { w.bits(0) });
+			spim.events_end.write(|w| unsafe { w.bits(0) });
+			spim.events_endtx.write(|w| unsafe { w.bits(0) });
+			spim.events_started.write(|w| unsafe { w.bits(0) });
+		}
 	});
 }
 
 #[allow(dead_code)]
 pub fn get_busy_dma() -> bool {
-	let busy = free(|cs| {
-		let spim = SPIM_HANDLE.borrow(cs).borrow();
-		let spim0 = spim.as_ref().unwrap();
-
-		(spim0.events_started.read().bits() != 0) && 
-		(spim0.events_endtx.read().bits() == 0)
-	});
-
-	busy
+	free(|cs| {
+		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			(spim.events_started.read().bits() != 0) && 
+			(spim.events_endtx.read().bits() == 0)
+		}
+		else {
+			false
+		}
+	})
 }
 
 #[allow(dead_code)]
@@ -106,13 +106,12 @@ pub fn setup_block(block: &[u8]){
 	}
 
 	free(|cs| {
-		let spi = SPIM_HANDLE.borrow(cs).borrow();
-		let spim0 = spi.as_ref().unwrap();
-
-		spim0.rxd.maxcnt.write(|w| unsafe { w.maxcnt().bits(len as u8) });
-		spim0.rxd.ptr.write(|w| unsafe { w.ptr().bits(rx_ptr as u32) });
-		spim0.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(len as u8) });
-		spim0.txd.ptr.write(|w| unsafe { w.ptr().bits(tx_ptr as u32) });
+		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			spim.rxd.maxcnt.write(|w| unsafe { w.maxcnt().bits(len as u8) });
+			spim.rxd.ptr.write(|w| unsafe { w.ptr().bits(rx_ptr as u32) });
+			spim.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits(len as u8) });
+			spim.txd.ptr.write(|w| unsafe { w.ptr().bits(tx_ptr as u32) });
+		}
 	});
 }
 
@@ -122,39 +121,36 @@ pub fn start_block() {
 	dma_cleanup();
 
 	free(|cs| {
-		let spim = SPIM_HANDLE.borrow(cs).borrow();
-		let spim0 = spim.as_ref().unwrap();
-
-		spim0.tasks_start.write(|w| unsafe { w.bits(1) });		
+		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			spim.tasks_start.write(|w| unsafe { w.bits(1) });
+		}
 	});
 }
 
 #[allow(dead_code)]
 pub fn tx_byte(byte: u8) {
 	free(|cs| {
-		let spi = SPI_HANDLE.borrow(cs).borrow();
-		let spi0 = spi.as_ref().unwrap();
+		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			spi.txd.write(|w| unsafe { w.txd().bits(byte) });
 
-		spi0.txd.write(|w| unsafe { w.txd().bits(byte) });
+			while spi.events_ready.read().bits() == 0 {};
 
-		while spi0.events_ready.read().bits() == 0 {};
-
-		spi0.rxd.read().bits();
+			spi.rxd.read().bits();
+		}
 	});
 }
 
 #[allow(dead_code)]
 pub fn tx_data(data: &[u8]) {
 	free(|cs| {
-		let spi = SPI_HANDLE.borrow(cs).borrow();
-		let spi0 = spi.as_ref().unwrap();
+		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			for i in 0..data.len() {
+				spi.txd.write(|w| unsafe { w.txd().bits(data[i]) });
 
-		for i in 0..data.len() {
-			spi0.txd.write(|w| unsafe { w.txd().bits(data[i]) });
+				while spi.events_ready.read().bits() == 0 {};
 
-			while spi0.events_ready.read().bits() == 0 {};
-
-			spi0.rxd.read().bits();
+				spi.rxd.read().bits();
+			}
 		}
 	});
 }
