@@ -2,7 +2,7 @@ MEMORY
 {
   /* NOTE 1 K = 1 KiBi = 1024 bytes */
   FLASH : ORIGIN = 0x00000000, LENGTH = 512K
-  RAM : ORIGIN = 0x00800000, LENGTH = 64K
+  RAM : ORIGIN = 0x00800000, LENGTH = 63K
 }
 
 /* This is where the call stack will be allocated. */

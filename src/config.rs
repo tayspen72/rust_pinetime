@@ -59,10 +59,10 @@ pub const SPI_ORDER: spim0::config::ORDER_A = spim0::config::ORDER_A::MSBFIRST;
 pub const SPI_MOSI_PIN: u8 			= 3;
 pub const SPI_MISO_PIN: u8 			= 4;
 pub const SPI_SCLK_PIN: u8 			= 2;
-pub const SPIM_RX_BANKA: usize		= 0x2000_0000;
-pub const SPIM_RX_BANKB: usize		= 0x2000_0100;
-pub const SPIM_TX_BANKA: usize		= 0x2000_0200;
-pub const SPIM_TX_BANKB: usize		= 0x2000_0300;
+pub const SPIM_RX_BANKA: usize		= 0x2000_FC00;
+pub const SPIM_RX_BANKB: usize		= 0x2000_FD00;
+pub const SPIM_TX_BANKA: usize		= 0x2000_FE00;
+pub const SPIM_TX_BANKB: usize		= 0x2000_FF00;
 
 //==============================================================================
 // Touch Sensor
