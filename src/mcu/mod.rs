@@ -32,6 +32,9 @@ use crate::drivers::app;
 pub fn init(wake_interval: rtc::WakeInterval) {
 	let peripherals = nrf52832_pac::Peripherals::take().unwrap();
 
+	peripherals.CLOCK.tasks_hfclkstart.write(|w| unsafe { w.bits(1) });
+	while peripherals.CLOCK.events_hfclkstarted.read().bits() == 0 {};
+
 	gpio::init(peripherals.P0);
 
 	i2c::init(peripherals.TWI0);
