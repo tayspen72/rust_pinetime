@@ -524,7 +524,7 @@ fn get_minimal_character(c: char) -> &'static MinimalCharacter {
 		':' => &MINIMAL_CHARACTER_LIST[68],
 		'[' => &MINIMAL_CHARACTER_LIST[69],
 		']' => &MINIMAL_CHARACTER_LIST[70],
-		_ => &MinimalCharacter { bytes: [0x00, 0x00, 0x00, 0x00, 0x00] }
+		_ => &MinimalCharacter { bytes: [0x00; 5] }
 	}
 }
 
@@ -536,8 +536,8 @@ pub fn write_minimal_character(c: char, x: u16, y: u16, fg: u16, bg: u16, scale:
 	lcd_api::set_window(x, char_width, y, char_height);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	let bytes = get_minimal_character(c).bytes;
-	let bg_color: [u8; 2] = [ ((bg & 0xFF00) >> 8) as u8, (bg & 0x00FF) as u8 ];
-	let fg_color: [u8; 2] = [ ((fg & 0xFF00) >> 8) as u8, (fg & 0x00FF) as u8 ];
+	let bg = bg.to_le_bytes();
+	let fg = fg.to_le_bytes();
 
 	let mut bit_count: usize = 0;
 	let mut byte_count: usize = 0;
@@ -555,10 +555,10 @@ pub fn write_minimal_character(c: char, x: u16, y: u16, fg: u16, bg: u16, scale:
 
 				for _col_scaler in 0..scale {
 					if pixel_is_on {
-						lcd::write_data(&fg_color);
+						lcd::write_data(&fg);
 					}
 					else {
-						lcd::write_data(&bg_color);
+						lcd::write_data(&bg);
 					}
 				}
 				
@@ -583,18 +583,18 @@ pub fn write_time_character(n: u8, x: u16, y: u16, fg: u16, bg: u16) {
 	lcd_api::set_window(x, char_width, y, char_height);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	let bytes = TIME_CHARACTER_LIST[(n % 10) as usize].bytes;
-	let bg_color: [u8; 2] = [ ((bg & 0xFF00) >> 8) as u8, (bg & 0x00FF) as u8 ];
-	let fg_color: [u8; 2] = [ ((fg & 0xFF00) >> 8) as u8, (fg & 0x00FF) as u8 ];
+	let bg = bg.to_le_bytes();
+	let fg = fg.to_le_bytes();
 
 	let num_bytes: usize = (char_width*char_height/8) as usize;
 
 	for byte in 0..num_bytes {
 		for bit in 0..8 {
 			if (bytes[byte] & (0x80 >> bit)) > 0 {
-				lcd::write_data(&fg_color);
+				lcd::write_data(&fg);
 			}
 			else {
-				lcd::write_data(&bg_color);
+				lcd::write_data(&bg);
 			}
 		}
 	}
