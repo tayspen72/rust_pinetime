@@ -25,7 +25,7 @@ pub struct I2cLine {
 //==============================================================================
 // Variables
 //==============================================================================
-static I2C_HANDLE: Mutex<RefCell<Option<nrf52832_pac::TWI0>>> = 
+static I2C_HANDLE: Mutex<RefCell<Option<nrf52832_pac::TWI1>>> = 
 	Mutex::new(RefCell::new(None));
 
 const I2C_LINE: I2cLine = I2cLine {
@@ -37,7 +37,7 @@ const I2C_LINE: I2cLine = I2cLine {
 //==============================================================================
 // Public Functions
 //==============================================================================
-pub fn init(i2c: nrf52832_pac::TWI0){
+pub fn init(i2c: nrf52832_pac::TWI1){
 	configure(&i2c);
 
 	free(|cs| I2C_HANDLE.borrow(cs).replace(Some(i2c)));
@@ -136,7 +136,7 @@ pub fn read_byte(address: u8, send_stop: bool) -> Option<u8> {
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn configure(i2c: &nrf52832_pac::TWI0) {
+fn configure(i2c: &nrf52832_pac::TWI1) {
 	i2c.enable.write(|w| w.enable().disabled());
 	
 	i2c.pselscl.write(|w| unsafe { w.bits( I2C_LINE.scl_pin as u32) });
