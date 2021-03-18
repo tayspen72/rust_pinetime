@@ -71,7 +71,7 @@ pub fn write_command(command: st7789::COMMAND) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinLow);
 
-	spi::tx_byte(command as u8);
+	spi::tx_data(&[command as u8]);
 
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
@@ -82,6 +82,42 @@ pub fn write_data(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
 	spi::tx_data(data);
+
+	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
+}
+
+pub fn write_block_solid(color: u16, len: u16) {
+	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
+	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
+
+	// build a single block and setup the DMA once
+	let color = color.to_le_bytes();
+	let mut block: [u8; 256] = [0; 256];
+	for word in block.chunks_exact_mut(2) {
+		word[0] = color[0];
+		word[1] = color[1];
+	}
+
+	// Need to be sending 2B per pixel
+	let mut len = len * 2;
+	
+	// Start transmit on full length (256B) packets
+	if len > 256 {
+		spi::setup_block(&block);
+
+		while len > 256 {
+			spi::start_block();
+			len = len - 256;
+		}
+	}
+
+	// Send any partial packets
+	if len > 0 {
+		spi::setup_block(&block[0..len as usize]);
+		spi::start_block();
+	}
+
+	spi::dma_cleanup();
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }

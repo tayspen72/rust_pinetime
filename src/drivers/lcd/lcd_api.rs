@@ -69,38 +69,33 @@ pub fn get_busy() -> bool {
 }
 
 pub fn fill_background(color: u16) {
-	set_window(0, 240, 0, 240);
-	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
-	for _ in 0..57600 {
-		lcd::write_data(&[ ((color & 0xFF00) >> 8)as u8, (color & 0xFF) as u8 ]);
-	}
+	fill_rectangle(0, 240, 0, 240, color);
 }
 
 pub fn fill_rectangle(x: u16, width: u16, y: u16, height: u16, color: u16) {
 	set_window(x, width, y, height);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
-	for _ in 0..(width * height) {
-		lcd::write_data(&[ ((color & 0xFF00) >> 8)as u8, (color & 0xFF) as u8 ]);
-	}
+	lcd::write_block_solid(color, width*height);
 }
 
 pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
 	let x_end = x + width - 1;
 	let y_end = y + height - 1;
 
+	// TODO: Check that this endian conversion is correct
+	let x = x.to_le_bytes();
+	let x_end = x_end.to_le_bytes();
+	let y = y.to_le_bytes();
+	let y_end = y_end.to_le_bytes();
+
 	// Define the window column size
 	lcd::write_command(st7789::COMMAND::COLUMN_ADDRESS);
-	lcd::write_data( &[ 
-		((x & 0xFF00) >> 8) as u8, (x & 0x00FF) as u8,
-		((x_end & 0xFF00) >> 8) as u8, (x_end & 0x00FF) as u8,
-	]);
+	lcd::write_data( &[ x[0], x[1], x_end[0], x_end[1] ]);
 
 	// Define the window row size
 	lcd::write_command(st7789::COMMAND::ROW_ADDRESS);
-	lcd::write_data( &[ 
-		((y & 0xFF00) >> 8) as u8, (y & 0x00FF) as u8,
-		((y_end & 0xFF00) >> 8) as u8, (y_end & 0x00FF) as u8,
-	]);
+	lcd::write_data( &[ y[0], y[1], y_end[0], y_end[1] ]);
+
 }
 
 fn write_image() {

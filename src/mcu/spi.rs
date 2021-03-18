@@ -9,7 +9,7 @@
 use core::cell::{Cell, RefCell};
 use core::ops::DerefMut;
 use cortex_m::interrupt::{free, Mutex};
-use nrf52832_pac::spi0;
+use nrf52832_pac::spim0;
 use crate::config;
 use crate::mcu::gpio;
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
@@ -29,10 +29,10 @@ pub struct SpiLine{
 	pub sclk_pin: u8,
 	pub mosi_pin: u8,
 	pub miso_pin: u8,
-	pub frequency: spi0::frequency::FREQUENCY_A,
-	pub order: spi0::config::ORDER_A,
-	pub cpha: spi0::config::CPHA_A,
-	pub cpol: spi0::config::CPOL_A
+	pub frequency: spim0::frequency::FREQUENCY_A,
+	pub order: spim0::config::ORDER_A,
+	pub cpha: spim0::config::CPHA_A,
+	pub cpol: spim0::config::CPOL_A
 }
 
 type ArrayList = [u8];
@@ -51,8 +51,6 @@ const SPI_LINE: SpiLine = SpiLine {
 	cpha: config::SPI_CPHA,
 	cpol: config::SPI_CPOL,
 };
-static SPI_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPI0>>> = 
-	Mutex::new(RefCell::new(None));
 
 static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> = 
 	Mutex::new(RefCell::new(None));
@@ -60,10 +58,9 @@ static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> =
 //==============================================================================
 // Public Functions
 //==============================================================================
-pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
-	configure(&spi0, &spim0);
+pub fn init(spim0: nrf52832_pac::SPIM0) {
+	configure(&spim0);
 
-	free(|cs| SPI_HANDLE.borrow(cs).replace(Some(spi0)));
 	free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(spim0)));
 }
 
@@ -127,53 +124,40 @@ pub fn start_block() {
 	});
 }
 
-pub fn tx_byte(byte: u8) {
-	free(|cs| {
-		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			spi.txd.write(|w| unsafe { w.txd().bits(byte) });
+pub fn tx_data(data: &ArrayList) {
+	// Initialize the transmit registers with the data payload
+	setup_block(data);
 
-			while spi.events_ready.read().bits() == 0 {};
+	// Start the transfer when ready
+	start_block();
 
-			spi.rxd.read().bits();
-		}
-	});
-}
+	// Wait for transfer to complete
+	while get_busy_dma() {};
 
-pub fn tx_data(data: &[u8]) {
-	free(|cs| {
-		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			for i in 0..data.len() {
-				spi.events_ready.write(|w| unsafe { w.bits(0) });
-				spi.txd.write(|w| unsafe { w.txd().bits(data[i]) });
-
-				while spi.events_ready.read().bits() == 0 {};
-
-				spi.rxd.read().bits();
-			}
-		}
-	});
+	// Reset the event registers when complete
+	dma_cleanup();
 }
 
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn configure(spi: &nrf52832_pac::SPI0, spim: &nrf52832_pac::SPIM0) {
-	spi.enable.write(|w| w.enable().disabled());
+fn configure(spim: &nrf52832_pac::SPIM0) {
+	spim.enable.write(|w| w.enable().disabled());
 
 	// Configure MOSI pin
 	gpio::pin_setup(SPI_LINE.mosi_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
-	spi.psel.mosi.write(|w| unsafe { w.bits(SPI_LINE.mosi_pin as u32) });
+	spim.psel.mosi.write(|w| unsafe { w.bits(SPI_LINE.mosi_pin as u32) });
 
 	// Configure MISO pin
 	gpio::pin_setup(SPI_LINE.miso_pin, DIR::INPUT, gpio::PinState::PinHigh, PULL::PULLUP);
-	spi.psel.miso.write(|w| unsafe { w.bits(SPI_LINE.miso_pin as u32) });
+	spim.psel.miso.write(|w| unsafe { w.bits(SPI_LINE.miso_pin as u32) });
 
 	// Configure SCLK pin
 	gpio::pin_setup(SPI_LINE.sclk_pin, DIR::OUTPUT, gpio::PinState::PinLow, PULL::DISABLED);
-	spi.psel.sck.write(|w| unsafe { w.bits(SPI_LINE.sclk_pin as u32) });
+	spim.psel.sck.write(|w| unsafe { w.bits(SPI_LINE.sclk_pin as u32) });
 
-	spi.frequency.write(|w| w.frequency().variant(SPI_LINE.frequency));
-	spi.config.write(|w| w
+	spim.frequency.write(|w| w.frequency().variant(SPI_LINE.frequency));
+	spim.config.write(|w| w
 		.order().variant(SPI_LINE.order)
 		.cpha().variant(SPI_LINE.cpha)
 		.cpol().variant(SPI_LINE.cpol)
@@ -183,7 +167,7 @@ fn configure(spi: &nrf52832_pac::SPI0, spim: &nrf52832_pac::SPIM0) {
 	spim.rxd.list.write(|w| w.list().variant(nrf52832_pac::spim0::rxd::list::LIST_A::ARRAYLIST));
 	spim.txd.list.write(|w| w.list().variant(nrf52832_pac::spim0::txd::list::LIST_A::ARRAYLIST));
 
-	spi.enable.write(|w| w.enable().enabled());
+	spim.enable.write(|w| w.enable().enabled());
 }
 
 fn get_open_spim_bank() -> (usize, usize) {
