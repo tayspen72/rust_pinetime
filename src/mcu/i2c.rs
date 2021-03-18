@@ -28,6 +28,11 @@ pub struct I2cLine {
 static I2C_HANDLE: Mutex<RefCell<Option<nrf52832_pac::TWI1>>> = 
 	Mutex::new(RefCell::new(None));
 
+const RX_BUFFER_LENGTH: usize = 64;
+static mut RX_BUFFER: [u8; RX_BUFFER_LENGTH] = [0; RX_BUFFER_LENGTH];
+static mut HEAD: usize = 0;
+static mut TAIL: usize = 0;
+
 const I2C_LINE: I2cLine = I2cLine {
 	scl_pin: config::I2C_SCL_PIN,
 	sda_pin: config::I2C_SDA_PIN,
@@ -97,8 +102,19 @@ pub fn write_data(address: u8, data: &[u8], send_start_command: bool, send_stop_
 	Some(true)
 }
 
+pub fn pop_byte() -> u8 {
+	unsafe {
+		let byte: u8  = RX_BUFFER[TAIL];
+		HEAD = HEAD + 1;
+		if HEAD >= RX_BUFFER.len() {
+			HEAD = 0; 
+		}
+		byte
+	}
+}
+
 #[allow(dead_code)]
-pub fn read_byte(address: u8, send_stop: bool) -> Option<u8> {
+pub fn read_byte(address: u8, send_stop: bool) -> Option<bool> {
 	set_address(address);
 
 	free(|cs| {
@@ -124,11 +140,59 @@ pub fn read_byte(address: u8, send_stop: bool) -> Option<u8> {
 			// Clear out the Rx event flag
 			i2c.events_rxdready.write(|w| unsafe { w.bits(0) });
 			
-			// Pull out byte
-			Some(i2c.rxd.read().rxd().bits())
+			// Push byte into rx buffer
+			unsafe {
+				RX_BUFFER[TAIL] = i2c.rxd.read().rxd().bits();
+				TAIL = TAIL + 1;
+				if TAIL >= RX_BUFFER.len() {
+					TAIL = 0; 
+				}
+			}
+			Some(true)
 		}
 		else{
 			None
+		}
+	})
+}
+
+#[allow(dead_code)]
+pub fn read_data(address: u8, send_stop: bool, len: u16) {
+	set_address(address);
+
+	free(|cs| {
+		if let Some(ref mut i2c) = I2C_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			for _ in 0..len {
+				// Start Rx task
+				i2c.tasks_startrx.write(|w| unsafe { w.bits(1) } );
+				
+				// Wait for rx event or error out
+				while i2c.events_rxdready.read().bits() == i2c.events_error.read().bits() {}
+				
+				// If error, bail out
+				if i2c.events_error.read().bits() > 0 {
+					i2c.events_error.write(|w| unsafe { w.bits(0) });
+					i2c.tasks_stop.write(|w| unsafe { w.bits(1) } );
+					return;
+				}
+				
+				// Send stop before reading rxd as it could initiate another rx when read
+				if send_stop {
+					i2c.tasks_stop.write(|w| unsafe { w.bits(1) } );
+				}
+				
+				// Clear out the Rx event flag
+				i2c.events_rxdready.write(|w| unsafe { w.bits(0) });
+				
+				// Push byte into rx buffer
+				unsafe {
+					RX_BUFFER[TAIL] = i2c.rxd.read().rxd().bits();
+					TAIL = TAIL + 1;
+					if TAIL >= RX_BUFFER.len() {
+						TAIL = 0; 
+					}
+				}
+			}
 		}
 	})
 }

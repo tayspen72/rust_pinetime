@@ -6,19 +6,39 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use core::cell::Cell;
+use cortex_m::interrupt::{free, Mutex};
 use crate::config;
 use crate::mcu::i2c;
+use super::cst8165;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
+pub enum GestureId {
+	None,
+	SlideUp,
+	SlideDown,
+	SlideLeft,
+	SlideRight,
+	SinglePress,
+	DoublePress,
+	LongPress
+}
 
+pub struct TouchEvent{
+	pub x: u8,
+	pub y: u8,
+	pub gesture: GestureId,
+	pub pressure: u8 
+}
 
 //==============================================================================
 // Variables
 //==============================================================================
-//TODO: move this into a large register description file when finished
-const TOUCH_ID:u8 = 0xFF;	// wrong value!
+static TOUCH_EVENT: Mutex<Cell<TouchEvent>> = Mutex::new(Cell::new( TouchEvent {
+	x: 0, y: 0, gesture: GestureId::None, pressure: 0
+}));
 
 //==============================================================================
 // Public Functions
@@ -33,7 +53,7 @@ pub fn init() {
 //==============================================================================
 fn check_connected() -> bool {
 	let id = read_register(0x00).unwrap();
-	if id == TOUCH_ID {
+	if id == cst8165::WHO_AM_I_VALUE {
 		true
 	}
 	else {
@@ -47,9 +67,23 @@ fn configure() {
 	}
 }
 
+fn get_event() {
+	let mut buf: [u8; 63] = [0; 63];
+	i2c::read_data(config::TOUCH_I2C_ADDRESS, true, 63);
+	for i in 0..buf.len() {
+		buf[i] = i2c::pop_byte();
+	}
+
+	//TODO: Build this event from the register
+	let mut event: TouchEvent;
+
+	
+}
+
 fn read_register(reg: u8) -> Option<u8> {
 	if i2c::write_byte(config::TOUCH_I2C_ADDRESS, reg, true, false).unwrap() {
-		return i2c::read_byte(config::TOUCH_I2C_ADDRESS, true);
+		i2c::read_byte(config::TOUCH_I2C_ADDRESS, true);
+		return Some(i2c::pop_byte());
 	}
 
 	None
