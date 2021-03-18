@@ -50,13 +50,14 @@ pub fn init() {
 	lcd::init();
 
 	// // TODO: Fix the colors...
-	// fill_background(p, Color::Red as u16);
-	// fill_background(p, Color::Orange as u16);
-	// fill_background(p, Color::Yellow as u16);
-	// fill_background(p, Color::Green as u16);
-	// fill_background(p, Color::Blue as u16);
-	// fill_background(p, Color::Purple as u16);
+	// fill_background(Color::Red as u16);
+	// fill_background(Color::Orange as u16);
+	// fill_background(Color::Yellow as u16);
+	// fill_background(Color::Green as u16);
+	// fill_background(Color::Blue as u16);
+	// fill_background(Color::Purple as u16);
 	fill_background(Color::Black as u16);
+	
 	lcd::set_backlight(lcd::BacklightBrightness::Brightness7);
 	write_image();
 	write_image_dma();

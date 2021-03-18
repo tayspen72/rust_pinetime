@@ -61,7 +61,7 @@ static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> =
 //==============================================================================
 #[allow(dead_code)]
 pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
-	configure(&spi0);
+	configure(&spi0, &spim0);
 
 	free(|cs| SPI_HANDLE.borrow(cs).replace(Some(spi0)));
 	free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(spim0)));
@@ -70,6 +70,9 @@ pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
 pub fn dma_cleanup() {
 	free(|cs| {
 		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			spim.tasks_stop.write(|w| unsafe { w.bits(1) });
+
+			spim.events_stopped.write(|w| unsafe { w.bits(0) });
 			spim.events_endrx.write(|w| unsafe { w.bits(0) });
 			spim.events_end.write(|w| unsafe { w.bits(0) });
 			spim.events_endtx.write(|w| unsafe { w.bits(0) });
@@ -145,6 +148,7 @@ pub fn tx_data(data: &[u8]) {
 	free(|cs| {
 		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
 			for i in 0..data.len() {
+				spi.events_ready.write(|w| unsafe { w.bits(0) });
 				spi.txd.write(|w| unsafe { w.txd().bits(data[i]) });
 
 				while spi.events_ready.read().bits() == 0 {};
@@ -158,7 +162,7 @@ pub fn tx_data(data: &[u8]) {
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn configure(spi: &nrf52832_pac::SPI0) {
+fn configure(spi: &nrf52832_pac::SPI0, spim: &nrf52832_pac::SPIM0) {
 	spi.enable.write(|w| w.enable().disabled());
 
 	// Configure MOSI pin
@@ -179,6 +183,9 @@ fn configure(spi: &nrf52832_pac::SPI0) {
 		.cpha().variant(SPI_LINE.cpha)
 		.cpol().variant(SPI_LINE.cpol)
 	);
+
+	spim.rxd.list.write(|w| w.list().variant(nrf52832_pac::spim0::rxd::list::LIST_A::ARRAYLIST));
+	spim.txd.list.write(|w| w.list().variant(nrf52832_pac::spim0::txd::list::LIST_A::ARRAYLIST));
 
 	spi.enable.write(|w| w.enable().enabled());
 }
