@@ -19,7 +19,12 @@ use core::ptr;
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-#[allow(dead_code)]
+#[derive(Clone, Copy)]
+enum ActiveBank {
+	BankA,
+	BankB
+}
+
 pub struct SpiLine{
 	pub sclk_pin: u8,
 	pub mosi_pin: u8,
@@ -30,11 +35,7 @@ pub struct SpiLine{
 	pub cpol: spi0::config::CPOL_A
 }
 
-#[derive(Clone, Copy)]
-enum ActiveBank {
-	BankA,
-	BankB
-}
+type ArrayList = [u8];
 
 //==============================================================================
 // Variables
@@ -59,7 +60,6 @@ static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> =
 //==============================================================================
 // Public Functions
 //==============================================================================
-#[allow(dead_code)]
 pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
 	configure(&spi0, &spim0);
 
@@ -81,7 +81,6 @@ pub fn dma_cleanup() {
 	});
 }
 
-#[allow(dead_code)]
 pub fn get_busy_dma() -> bool {
 	free(|cs| {
 		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
@@ -94,8 +93,7 @@ pub fn get_busy_dma() -> bool {
 	})
 }
 
-#[allow(dead_code)]
-pub fn setup_block(block: &[u8]){
+pub fn setup_block(block: &ArrayList){
 	// Pull ptrs to the open RAM banks
 	let (rx_ptr, tx_ptr): (usize, usize) = get_open_spim_bank();
 	let len = if block.len() > 256 { 256 } else { block.len() };
@@ -118,7 +116,6 @@ pub fn setup_block(block: &[u8]){
 	});
 }
 
-#[allow(dead_code)]
 pub fn start_block() {
 	while get_busy_dma() {}
 	dma_cleanup();
@@ -130,7 +127,6 @@ pub fn start_block() {
 	});
 }
 
-#[allow(dead_code)]
 pub fn tx_byte(byte: u8) {
 	free(|cs| {
 		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
@@ -143,7 +139,6 @@ pub fn tx_byte(byte: u8) {
 	});
 }
 
-#[allow(dead_code)]
 pub fn tx_data(data: &[u8]) {
 	free(|cs| {
 		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
@@ -184,6 +179,7 @@ fn configure(spi: &nrf52832_pac::SPI0, spim: &nrf52832_pac::SPIM0) {
 		.cpol().variant(SPI_LINE.cpol)
 	);
 
+	// Ensure we are using the ArrayList structure
 	spim.rxd.list.write(|w| w.list().variant(nrf52832_pac::spim0::rxd::list::LIST_A::ARRAYLIST));
 	spim.txd.list.write(|w| w.list().variant(nrf52832_pac::spim0::txd::list::LIST_A::ARRAYLIST));
 
