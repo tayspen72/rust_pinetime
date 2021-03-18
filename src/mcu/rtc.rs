@@ -26,9 +26,9 @@ pub enum WakeInterval {
 //==============================================================================
 // Variables
 //==============================================================================
-static _WAKE_INTERVAL: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
-static _FRACTION: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
-static _SECONDS: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
+static WAKE_INTERVAL: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
+static FRACTION: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
+static SECONDS: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
 
 static RTC_HANDLE: Mutex<RefCell<Option<nrf52832_pac::RTC0>>> = 
 	Mutex::new(RefCell::new(None));
@@ -38,7 +38,7 @@ static RTC_HANDLE: Mutex<RefCell<Option<nrf52832_pac::RTC0>>> =
 //==============================================================================
 #[allow(dead_code)]
 pub fn init(rtc: nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK, interval: WakeInterval) {
-	free(|cs| _WAKE_INTERVAL.borrow(cs).set(interval as u32));
+	free(|cs| WAKE_INTERVAL.borrow(cs).set(interval as u32));
 
 	// Enable after HANDLE has been initialized so the mutex is not 'None'
 	configure(&rtc, clock);
@@ -49,24 +49,24 @@ pub fn init(rtc: nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK, interval: Wake
 
 #[allow(dead_code)]
 pub fn get_timestamp() -> u32 {
-	free(|cs| _SECONDS.borrow(cs).get())
+	free(|cs| SECONDS.borrow(cs).get())
 }
 
 #[allow(dead_code)]
 pub fn get_timediff(seconds: u32) -> u32 {
-	let app_seconds = free(|cs| _SECONDS.borrow(cs).get());
+	let app_seconds = free(|cs| SECONDS.borrow(cs).get());
 	app_seconds - seconds
 }
 
 #[allow(dead_code)]
 pub fn get_timestamp_fraction() -> u32 {
-	free(|cs| _FRACTION.borrow(cs).get())
+	free(|cs| FRACTION.borrow(cs).get())
 }
 
 #[allow(dead_code)]
 pub fn get_timediff_fraction(seconds: u32, fraction: u32) -> u32 {
-	let app_seconds = free(|cs| _SECONDS.borrow(cs).get());
-	let app_fraction = free(|cs| _FRACTION.borrow(cs).get());
+	let app_seconds = free(|cs| SECONDS.borrow(cs).get());
+	let app_fraction = free(|cs| FRACTION.borrow(cs).get());
 
 	((app_seconds * 1000) + app_fraction) - ((seconds * 1000) + fraction)
 }
@@ -92,7 +92,7 @@ fn configure(rtc: &nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK) {
 
 	//define the wake interval
 	rtc.cc[0].write(|w| unsafe { w.bits(
-		free(|cs| _WAKE_INTERVAL.borrow(cs).get())
+		free(|cs| WAKE_INTERVAL.borrow(cs).get())
 	) });
 
 	//connect the interrupt event signal on compare0 match
@@ -106,8 +106,8 @@ fn configure(rtc: &nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK) {
 	//Enable RTC
 	rtc.tasks_start.write(|w| unsafe { w.bits(1) });
 
-	free(|cs| _SECONDS.borrow(cs).set(0));
-	free(|cs| _FRACTION.borrow(cs).set(0));
+	free(|cs| SECONDS.borrow(cs).set(0));
+	free(|cs| FRACTION.borrow(cs).set(0));
 }
 
 
@@ -119,9 +119,9 @@ fn empty_function(){}
 //==============================================================================
 #[interrupt]
 fn RTC0() {
-	let mut fraction: u32 = free(|cs| _FRACTION.borrow(cs).get());
-	let mut seconds: u32 = free(|cs| _SECONDS.borrow(cs).get());
-	let wake_interval: u32 = free(|cs| _WAKE_INTERVAL.borrow(cs).get());
+	let mut fraction: u32 = free(|cs| FRACTION.borrow(cs).get());
+	let mut seconds: u32 = free(|cs| SECONDS.borrow(cs).get());
+	let wake_interval: u32 = free(|cs| WAKE_INTERVAL.borrow(cs).get());
 
 	free(|cs| {
 		if let Some(ref mut rtc) = RTC_HANDLE.borrow(cs).borrow_mut().deref_mut() {
@@ -139,8 +139,8 @@ fn RTC0() {
 		}
 	});
 
-	free(|cs| _FRACTION.borrow(cs).set(fraction));
-	free(|cs| _SECONDS.borrow(cs).set(seconds));
+	free(|cs| FRACTION.borrow(cs).set(fraction));
+	free(|cs| SECONDS.borrow(cs).set(seconds));
 }
 
 //==============================================================================
