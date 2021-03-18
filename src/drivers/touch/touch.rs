@@ -9,7 +9,7 @@
 use core::cell::Cell;
 use cortex_m::interrupt::{free, Mutex};
 use crate::config;
-use crate::mcu::i2c;
+use crate::mcu::{gpio, input, i2c};
 use super::cst816s;
 
 //==============================================================================
@@ -25,12 +25,20 @@ static TOUCH_EVENT: Mutex<Cell<cst816s::TouchEvent>> = Mutex::new(Cell::new( cst
 	gesture: cst816s::Gesture::Unknown, event: cst816s::Event::Unknown, x: 0, y: 0, pressure: 0
 }));
 
+const TOUCH_INT_PIN_CONFIG: input::PinConfig = input::PinConfig {
+	pin: config::TOUCH_INT_PIN,
+	polarity: nrf52832_pac::gpiote::config::POLARITY_A::HITOLO,	//TODO: Need to verify this!
+	pull: nrf52832_pac::p0::pin_cnf::PULL_A::PULLUP, // TODO: need to verify this
+	callback: &touch_handler
+};
+
 //==============================================================================
 // Public Functions
 //==============================================================================
 #[allow(dead_code)]
 pub fn init() {
-
+	// Init the input interrupt
+	input::init_pin(TOUCH_INT_PIN_CONFIG);
 }
 
 //==============================================================================
@@ -63,6 +71,10 @@ fn read_register(reg: u8) -> Option<u8> {
 	}
 
 	None
+}
+
+fn touch_handler(_state: gpio::PinState) {
+
 }
 
 #[allow(dead_code)]
