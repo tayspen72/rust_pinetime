@@ -107,22 +107,14 @@ pub fn pin_setup(pin: u8, dir: DIR, state: PinState, pull: PULL){
 
 #[allow(dead_code)]
 pub fn set_pin_state(pin: u8, state: PinState){
-	match state {
-		PinState::PinLow => {
-			free(|cs| 
-				if let Some(ref mut gpio) = GPIO_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-					gpio.outclr.write(|w| unsafe { w.bits(1 << pin) })
-				}
-			)
-		},
-		PinState::PinHigh => {
-			free(|cs| 
-				if let Some(ref mut gpio) = GPIO_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-					gpio.outset.write(|w| unsafe { w.bits(1 << pin) })
-				}
-			)
+	free(|cs| {
+		if let Some(ref mut gpio) = GPIO_HANDLE.borrow(cs).borrow_mut().deref_mut() {		
+			match state {
+				PinState::PinLow => gpio.outclr.write(|w| unsafe { w.bits(1 << pin) }),
+				PinState::PinHigh => gpio.outset.write(|w| unsafe { w.bits(1 << pin) })
+			}
 		}
-	}
+	});
 }
 
 //==============================================================================
