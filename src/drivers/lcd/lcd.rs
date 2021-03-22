@@ -32,6 +32,7 @@ pub enum BacklightBrightness {
 //==============================================================================
 // Variables
 //==============================================================================
+const DMA_ENABLED: bool = false;
 
 //==============================================================================
 // Public Functions
@@ -86,74 +87,20 @@ pub fn write_data(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }
 
-pub fn write_block_solid(color: u16, len: u16) {
-	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
-	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
-
-	// build a single block and setup the DMA once
-	// let color = color.to_le_bytes();
-	// let mut block: [u8; 256] = [0; 256];
-	// for word in block.chunks_exact_mut(2) {
-	// 	word[0] = color[0];
-	// 	word[1] = color[1];
-	// }
-
-	// build a single block and setup the DMA once
-	// let mut block: [u16; 128] = [color; 128];
-	// let block = unsafe {
-	// 	core::slice::from_raw_parts_mut(block.as_mut_ptr() as *mut u8, block.len() * 2)
-	// };
-
-	// build a single block and setup the DMA once
-	let block: [u16; 128] = [color; 128];
-	let block = unsafe {
-		core::mem::transmute::<[u16; 128], [u8; 256]>(block)
-	};
-
-	// Need to be sending 2B per pixel
-	let mut len = len * 2;
-	
-	// Start transmit on full length (256B) packets
-	if len > 256 {
-		spi::setup_block(&block);
-
-		while len > 256 {
-			spi::start_block();
-			len = len - 256;
-		}
-	}
-	
-	// Send any partial packets
-	if len > 0 {
-		spi::setup_block(&block[0..len as usize]);
-		spi::start_block();
-	}
-
-	spi::dma_cleanup();
-
-	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
-}
-
 pub fn write_block(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	while spi::get_busy_dma() {}
+	spi::write_data(data, DMA_ENABLED);
+	
+	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
+}
 
-	let mut num_bytes = data.len();
-	let mut index = 0;
-	while num_bytes > 0 {
-		let transfer_size = if num_bytes > 256 { 256 } else { num_bytes };
-		num_bytes -= transfer_size;
+pub fn write_block_solid(color: u16, len: u32) {
+	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
+	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-		spi::setup_block(&data[index..index+transfer_size]);
-		spi::start_block();
-
-		index += transfer_size
-	}
-
-	while spi::get_busy_dma() {}
-	spi::dma_cleanup();
+	spi::write_data_solid(color, len, DMA_ENABLED);
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }
