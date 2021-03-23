@@ -68,7 +68,7 @@ pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
 }
 
 pub fn write_data(data: &ArrayList, use_dma: bool) {
-	let mut num_bytes = data.len() - 1;
+	let mut num_bytes = data.len();
 	let mut index = 0;
 
 	while num_bytes > 0 {
@@ -77,11 +77,11 @@ pub fn write_data(data: &ArrayList, use_dma: bool) {
 	
 		if use_dma {
 			// TODO: warning! Not working and will cause PANIC!
-			setup_block(&data[index..index+transfer_size-1]);
+			setup_block(&data[index..index+transfer_size]);
 			start_block();
 		}
 		else {
-			tx_data(&data[index..index+transfer_size-1]);
+			tx_data(&data[index..index+transfer_size]);
 		}
 
 		index = index + transfer_size;
@@ -95,12 +95,12 @@ pub fn write_data(data: &ArrayList, use_dma: bool) {
 
 pub fn write_data_solid(color: u16, len: u32, use_dma: bool) {
 	// build a single block and setup the DMA once
-	let color = color.to_le_bytes();
-	let mut block: [u8; 256] = [0; 256];
-	for word in block.chunks_exact_mut(2) {
-		word[0] = color[0];
-		word[1] = color[1];
-	}
+	// let color = color.to_le_bytes();
+	// let mut block: [u8; 256] = [0; 256];
+	// for word in block.chunks_exact_mut(2) {
+	// 	word[0] = color[1];
+	// 	word[1] = color[0];
+	// }
 
 	// build a single block and setup the DMA once
 	// let mut block: [u16; 128] = [color; 128];
@@ -108,11 +108,11 @@ pub fn write_data_solid(color: u16, len: u32, use_dma: bool) {
 	// 	core::slice::from_raw_parts_mut(block.as_mut_ptr() as *mut u8, block.len() * 2)
 	// };
 
-	// build a single block and setup the DMA once
-	// let block: [u16; 128] = [color; 128];
-	// let block = unsafe {
-	// 	core::mem::transmute::<[u16; 128], [u8; 256]>(block)
-	// };
+	// Build a single block and setup the DMA once
+	let block: [u16; 128] = [color; 128];
+	let block = unsafe {
+		core::mem::transmute::<[u16; 128], [u8; 256]>(block)
+	};
 
 	// Need to be sending 2B per pixel
 	let mut num_bytes = len * 2;
@@ -121,7 +121,7 @@ pub fn write_data_solid(color: u16, len: u32, use_dma: bool) {
 		let transfer_size = if num_bytes > 256 { 256 } else { num_bytes };
 		num_bytes = num_bytes - transfer_size;
 
-		write_data(&block[0..(transfer_size - 1) as usize], false);
+		write_data(&block[0..(transfer_size) as usize], false);
 	}
 
 	// If using DMA, wait for block to finish before quitting
