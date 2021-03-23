@@ -77,7 +77,7 @@ pub fn write_time() {
 		for i in 0..6 {
 			if digits[i] != LAST_DIGITS[i] {
 				LAST_DIGITS[i] = digits[i];
-				lcd::font::write_time_character(digits[i], DIGITS_X[i], DIGITS_Y[i], lcd::lcd_api::Color::Blue as u16, lcd::lcd_api::Color::White as u16);
+				lcd::font::write_time_character(digits[i], DIGITS_X[i], DIGITS_Y[i], lcd::lcd_api::Color::Blue, lcd::lcd_api::Color::White);
 			}
 		}
 	}

@@ -30,8 +30,8 @@ struct LogLine{
  const DEBUG_INITIAL_X: u16 = 0;
  const DEBUG_INITIAL_Y: u16 = 137;
  const DEBUG_SCALE: u16 = 2;
- const DEBUG_BACKGROUND: u16 = lcd_api::Color::Black as u16;
- const DEBUG_FOREGROUND: u16 = lcd_api::Color::White as u16;
+ const DEBUG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
+ const DEBUG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
  const DEBUG_WELCOME: [char; 24] = [
 	'*', '*', ' ', ' ', ' ', ' ', 'D', 'e', 'b', 'u', 'g', ' ', 
 	'O', 'u', 't', 'p', 'u', 't', ' ', ' ', ' ', ' ', '*', '*'

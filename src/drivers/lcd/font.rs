@@ -529,15 +529,15 @@ fn get_minimal_character(c: char) -> &'static MinimalCharacter {
 }
 
 #[allow(dead_code)]
-pub fn write_minimal_character(c: char, x: u16, y: u16, fg: u16, bg: u16, scale: u16) {
+pub fn write_minimal_character(c: char, x: u16, y: u16, fg: lcd_api::Color, bg: lcd_api::Color, scale: u16) {
 	let char_width = MINIMAL_CHARACTER_WIDTH * scale;
 	let char_height = MINIMAL_CHARACTER_HEIGHT * scale;
 
 	lcd_api::set_window(x, char_width, y, char_height);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	let bytes = get_minimal_character(c).bytes;
-	let bg = bg.to_le_bytes();
-	let fg = fg.to_le_bytes();
+	let bg = (bg as u16).to_le_bytes();
+	let fg = (fg as u16).to_le_bytes();
 
 	let mut bit_count: usize = 0;
 	let mut byte_count: usize = 0;
@@ -576,15 +576,15 @@ pub fn write_minimal_character(c: char, x: u16, y: u16, fg: u16, bg: u16, scale:
 }
 
 #[allow(dead_code)]
-pub fn write_time_character(n: u8, x: u16, y: u16, fg: u16, bg: u16) {
+pub fn write_time_character(n: u8, x: u16, y: u16, fg: lcd_api::Color, bg: lcd_api::Color) {
 	let char_width = TIME_CHARACTER_WIDTH;
 	let char_height = TIME_CHARACTER_HEIGHT;
 
 	lcd_api::set_window(x, char_width, y, char_height);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	let bytes = TIME_CHARACTER_LIST[(n % 10) as usize].bytes;
-	let bg = bg.to_le_bytes();
-	let fg = fg.to_le_bytes();
+	let bg = (bg as u16).to_le_bytes();
+	let fg = (fg as u16).to_le_bytes();
 
 	let num_bytes: usize = (char_width*char_height/8) as usize;
 
