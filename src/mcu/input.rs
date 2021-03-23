@@ -20,7 +20,7 @@ pub struct PinConfig {
 	pub pin: u8,
 	pub polarity: nrf52832_pac::gpiote::config::POLARITY_A,
 	pub pull: nrf52832_pac::p0::pin_cnf::PULL_A,
-	pub callback: &'static dyn Fn(gpio::PinState)
+	pub callback: &'static dyn Fn()
 }
 
 //==============================================================================

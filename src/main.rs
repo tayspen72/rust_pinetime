@@ -53,7 +53,7 @@ fn init() {
 	
 	button::init();
 	clock::init();
-	// touch::init(p);
+	touch::touch::init();
 }
 
 //==============================================================================
@@ -66,7 +66,7 @@ fn task_handler(d: &mut app::DeviceInfo) {
 	// button::task_handler();
 	clock::task_handler(d);
 	// lcd::lcd_api::task_handler();
-	// touch::task_handler();
+	touch::touch::task_handler();
 
 	app::task_handler();
 }

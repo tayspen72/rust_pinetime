@@ -110,10 +110,6 @@ fn configure(rtc: &nrf52832_pac::RTC0, clock: &nrf52832_pac::CLOCK) {
 	free(|cs| FRACTION.borrow(cs).set(0));
 }
 
-
-#[allow(dead_code)]
-fn empty_function(){}
-
 // =============================================================================
 // Interrupt Handler
 //==============================================================================
