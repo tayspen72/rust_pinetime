@@ -6,10 +6,9 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use core::cell::Cell;
-use cortex_m::interrupt::{free, Mutex};
 use crate::config;
-use crate::mcu::{input, i2c};
+use crate::drivers::debug;
+use crate::mcu::{gpio, input, i2c};
 use super::cst816s;
 
 //==============================================================================
@@ -20,17 +19,13 @@ use super::cst816s;
 //==============================================================================
 // Variables
 //==============================================================================
-static TOUCH_EVENT: Mutex<Cell<cst816s::TouchEvent>> = Mutex::new(Cell::new( cst816s::TouchEvent {
-	gesture: cst816s::Gesture::Unknown, event: cst816s::Event::Unknown, x: 0, y: 0, pressure: 0
-}));
-
 const TOUCH_INT_PIN_CONFIG: input::PinConfig = input::PinConfig {
 	pin: config::TOUCH_INT_PIN,
-	polarity: nrf52832_pac::gpiote::config::POLARITY_A::HITOLO,	//TODO: Need to verify this!
-	pull: nrf52832_pac::p0::pin_cnf::PULL_A::PULLUP, // TODO: need to verify this
-	callback: &touch_handler
+	polarity: nrf52832_pac::gpiote::config::POLARITY_A::HITOLO,
+	pull: nrf52832_pac::p0::pin_cnf::PULL_A::DISABLED,
+	callback: &touch_handler,
+	real_time_callback: true
 };
-
 
 const TOUCH_EVENT_READ_LEN: usize = 8;
 static mut UNHANDLED_EVENTS: bool = false;
@@ -40,28 +35,38 @@ static mut UNHANDLED_EVENTS: bool = false;
 //==============================================================================
 pub fn init() {
 	// Init the input interrupt
+	gpio::pin_setup(
+		config::TOUCH_RESET_PIN,
+		nrf52832_pac::p0::pin_cnf::DIR_A::OUTPUT,
+		gpio::PinState::PinHigh,
+		nrf52832_pac::p0::pin_cnf::PULL_A::DISABLED
+	);
+	
 	input::init_pin(TOUCH_INT_PIN_CONFIG);
 }
 
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn get_event() {
+fn get_event() -> cst816s::TouchEvent {
 	let mut buf: [u8; TOUCH_EVENT_READ_LEN] = [0; TOUCH_EVENT_READ_LEN];
 	for i in 0..buf.len() {
 		buf[i] = i2c::pop_byte();
 	}
-	
-	free(|cs| {
-		let mut touch: cst816s::TouchEvent = TOUCH_EVENT.borrow(cs).get();
-		touch.gesture = cst816s::get_gesture(buf[3]);
-		touch.event = cst816s::get_event(buf[3]);
-		touch.x = cst816s::get_coordinate(buf[3], buf[4]);
-		touch.y = cst816s::get_coordinate(buf[5], buf[6]);
-		touch.pressure = cst816s::get_pressure(buf[7]);
 
-		TOUCH_EVENT.borrow(cs).set(touch);
-	});
+	let touch: cst816s::TouchEvent = cst816s::TouchEvent {
+		gesture: cst816s::get_gesture(buf[3]),
+		event: cst816s::get_event(buf[3]),
+		x: cst816s::get_coordinate(buf[3], buf[4]),
+		y: cst816s::get_coordinate(buf[5], buf[6]),
+		pressure: cst816s::get_pressure(buf[7])
+	};
+
+	debug::push_log_number("event: ", &(touch.event as u32));
+	debug::push_log_number("x: ", &(touch.x as u32));
+	debug::push_log_number("y: ", &(touch.y as u32));
+
+	touch
 }
 
 fn touch_handler() {
