@@ -70,9 +70,9 @@ pub const SPIM_TX_BANKB: usize		= 0x2000_FF00;
 #[allow(dead_code)] pub const TOUCH_I2C_SDA_PIN: u8 	= I2C_SDA_PIN;
 #[allow(dead_code)] pub const TOUCH_I2C_SCL_PIN: u8 	= I2C_SCL_PIN;
 #[allow(dead_code)] pub const TOUCH_I2C_FREQUENCY: twi0::frequency::FREQUENCY_A	= I2C_FREQUENCY;
-#[allow(dead_code)] pub const TOUCH_I2C_ADDRESS: u8 	= 0x00;
+#[allow(dead_code)] pub const TOUCH_I2C_ADDRESS: u8 	= 0x15;
 #[allow(dead_code)] pub const TOUCH_INT_PIN: u8 		= 28;
-#[allow(dead_code)] pub const TOUCH_RESET_PIN: u8 		= 28;
+#[allow(dead_code)] pub const TOUCH_RESET_PIN: u8 		= 10;
 
 //==============================================================================
 // Uart
