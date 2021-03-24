@@ -45,6 +45,8 @@ pub fn init() {
 	lcd::set_backlight(lcd::BacklightBrightness::Brightness7);
 	
 	write_splash();
+
+	fill_background(Color::Black);
 }
 
 pub fn get_busy() -> bool {
