@@ -63,7 +63,7 @@ fn task_handler(d: &mut app::DeviceInfo) {
 	mcu::task_handler(d);
 	
 	debug::task_handler(d);
-	// button::task_handler();
+	button::task_handler(d);
 	clock::task_handler(d);
 	// lcd::lcd_api::task_handler();
 	touch::touch::task_handler();
