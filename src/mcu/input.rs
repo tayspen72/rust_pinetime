@@ -16,11 +16,20 @@ use super::gpio;
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
+#[derive(Clone, Copy)]
+struct InputQueueEntry{
+	pin: Option<u8>,
+	callback: &'static dyn Fn(),
+	real_time_callback: bool
+}
+
+#[derive(Clone, Copy)]
 pub struct PinConfig {
 	pub pin: u8,
 	pub polarity: nrf52832_pac::gpiote::config::POLARITY_A,
 	pub pull: nrf52832_pac::p0::pin_cnf::PULL_A,
-	pub callback: &'static dyn Fn()
+	pub callback: &'static dyn Fn(),
+	pub real_time_callback: bool
 }
 
 //==============================================================================
@@ -28,11 +37,11 @@ pub struct PinConfig {
 //==============================================================================
 const EVENT_LEN: usize = 8;
 const INPUT_QUEUE_LEN: usize = 16;
-static mut EVENT_MAP: [Option<u8>; EVENT_LEN] = [None; EVENT_LEN];
+static mut EVENT_MAP: [InputQueueEntry; EVENT_LEN] = [
+	InputQueueEntry { pin: None, callback: &dummy_function, real_time_callback: false }; EVENT_LEN];
 static HEAD: Mutex<Cell<usize>> = Mutex::new(Cell::new(0));
 static TAIL: Mutex<Cell<usize>> = Mutex::new(Cell::new(0));
-static QUEUE: Mutex<Cell<[u8; INPUT_QUEUE_LEN]>> = Mutex::new(Cell::new( [0; INPUT_QUEUE_LEN] ));
-
+static QUEUE: Mutex<Cell<[u8; INPUT_QUEUE_LEN]>> = Mutex::new(Cell::new([0; INPUT_QUEUE_LEN]));
 static GPIOTE_HANDLE: Mutex<RefCell<Option<nrf52832_pac::GPIOTE>>> = 
 	Mutex::new(RefCell::new(None));
 
@@ -52,7 +61,14 @@ pub fn init_pin(config: PinConfig) {
 	// Get the next available interrupt index
 	if let Some(event) = get_event_index(config.pin) {
 		configure(config, event);
-	}	
+		
+		// Assign this pin config to the event map
+		unsafe {
+			EVENT_MAP[event].pin = Some(config.pin);
+			EVENT_MAP[event].callback = config.callback;
+			EVENT_MAP[event].real_time_callback = config.real_time_callback;
+		}
+	}
 }
 
 //==============================================================================
@@ -88,11 +104,13 @@ fn configure(config: PinConfig, event: usize) {
 	}
 }
 
+fn dummy_function() {}
+
 fn get_event_exists(pin: u8) -> bool {
 	// Returns true if the pin is already in the queue
 	unsafe {
 		for e in 0..EVENT_LEN {
-			if let Some(tmp_pin) = EVENT_MAP[e] {
+			if let Some(tmp_pin) = EVENT_MAP[e].pin {
 				if tmp_pin == pin {
 					return true;
 				}
@@ -107,7 +125,7 @@ fn get_event_index(pin: u8) -> Option<usize> {
 	// If the pin does not have an index, one will be assigned and returned
 	unsafe {
 		for e in 0..EVENT_LEN {
-			if let Some(tmp_pin) = EVENT_MAP[e] {
+			if let Some(tmp_pin) = EVENT_MAP[e].pin {
 				if tmp_pin == pin {
 					return Some(e);
 				}
@@ -143,24 +161,33 @@ fn GPIOTE() {
 
 	// Safe this event in the queue
 	if let Some(e) = event {
-		// grab the current tail position
-		let tail: usize = free(|cs| TAIL.borrow(cs).get());
-		
-		// Update the tail pointer to the next available position
-		free(|cs| TAIL.borrow(cs).set( {
-			let mut tail = TAIL.borrow(cs).get() + 1;
-			if tail == EVENT_LEN {
-				tail = 0;
+		// If real time callback enabled, run the handler immediately and return
+		unsafe {
+			if EVENT_MAP[e].real_time_callback {
+				let f = EVENT_MAP[e].callback;
+				f();
+				return;
 			}
-			tail
-		}));
+		}
 
-		// Push this event onto the queue
-		free(|cs| { 
-			let mut queue = QUEUE.borrow(cs).get();
-			queue[tail] = e as u8;
-			QUEUE.borrow(cs).set(queue);
-		})
+		// // grab the current tail position
+		// let tail: usize = free(|cs| TAIL.borrow(cs).get());
+		
+		// // Update the tail pointer to the next available position
+		// free(|cs| TAIL.borrow(cs).set( {
+		// 	let mut tail = TAIL.borrow(cs).get() + 1;
+		// 	if tail == EVENT_LEN {
+		// 		tail = 0;
+		// 	}
+		// 	tail
+		// }));
+
+		// // Push this event onto the queue
+		// free(|cs| { 
+		// 	let mut queue = QUEUE.borrow(cs).get();
+		// 	queue[tail] = e as u8;
+		// 	QUEUE.borrow(cs).set(queue);
+		// })
 	}
 }
 
@@ -172,9 +199,12 @@ pub fn task_handler() {
 	let tail: usize = free(|cs| TAIL.borrow(cs).get());
 
 	while head != tail {
-		// TODO: do some stuff
-		// Convert the event number to a pin config
-		// Call the event handler callback
+		let event = free(|cs| QUEUE.borrow(cs).get())[head] as usize;
+
+		unsafe { 
+			let f = EVENT_MAP[event].callback;
+			f();
+		}
 
 		// Increment the head pointer
 		head = head + 1;
