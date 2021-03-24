@@ -14,11 +14,13 @@ pub mod app;
 // Enums, Structs, and Types
 //==============================================================================
 pub struct DeviceInfoFlags{
-	pub debug_log_active: bool,
+	pub button_press: bool,
+	pub debug_log_active: bool
 }
 
 pub struct DeviceInfo {
 	pub flags: DeviceInfoFlags,
+	pub button_press_count: u8,
     pub time: drivers::clock::Time,
 }
 
@@ -35,8 +37,10 @@ static mut DEVICE_INFO: bool = false;
 
 const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
     flags: DeviceInfoFlags {
-        debug_log_active: true 
+		button_press: false,
+        debug_log_active: true
     },
+	button_press_count: 0,
     time: drivers::clock::Time {
         hours: 0,
         minutes: 0, 
