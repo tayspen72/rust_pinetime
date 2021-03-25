@@ -25,8 +25,8 @@ pub struct Time {
 // Variables
 //==============================================================================
 static TIME: Mutex<Cell<Time>> = Mutex::new(Cell::new( Time {
-	hours: 8,
-	minutes: 25,
+	hours: 0,
+	minutes: 0,
 	seconds: 0
 }));
 
