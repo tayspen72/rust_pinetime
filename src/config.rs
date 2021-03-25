@@ -24,8 +24,8 @@ use nrf52832_pac::{twi0, spi0, uart0};
 //==============================================================================
 // I2C
 //==============================================================================
-pub const I2C_SCL_PIN: u8 			= 6;
-pub const I2C_SDA_PIN: u8 			= 7;
+pub const I2C_SCL_PIN: u8 			= 7;
+pub const I2C_SDA_PIN: u8 			= 6;
 pub const I2C_FREQUENCY: twi0::frequency::FREQUENCY_A = twi0::frequency::FREQUENCY_A::K100;
 
 //==============================================================================
