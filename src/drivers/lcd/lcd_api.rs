@@ -9,6 +9,7 @@
 // use crate::config;
 // use crate::mcu::spi;
 use super::{images, lcd, st7789};
+use crate::mcu::timer;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -42,11 +43,36 @@ pub fn init() {
 	lcd::init();
 
 	fill_background(Color::White);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness7);
-	
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
 	write_splash();
+	timer::delay(2000);
 
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
 	fill_background(Color::Black);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
+	fill_rectangle(0, 79, 0, 79, Color::Black);
+	fill_rectangle(81, 78, 0, 79, Color::Red);
+	fill_rectangle(161, 79, 0, 79, Color::Orange);
+	fill_rectangle(0, 79, 81, 78, Color::Yellow);
+	fill_rectangle(81, 78, 81, 78, Color::Green);
+	fill_rectangle(161, 79, 81, 78, Color::Cyan);
+	fill_rectangle(0, 79, 161, 79, Color::Blue);
+	fill_rectangle(81, 78, 161, 79, Color::Magenta);
+	fill_rectangle(161, 79, 161, 79, Color::White);
+	timer::delay(2000);
+
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
+	fill_background(Color::Black);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
+	lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
 }
 
 pub fn get_busy() -> bool {
@@ -84,6 +110,7 @@ pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
 	lcd::write_data( &[ y[1], y[0], y_end[1], y_end[0] ]);
 }
 
+#[allow(dead_code)]
 fn write_splash() {
 	set_window(39, 160, 59, 106);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
