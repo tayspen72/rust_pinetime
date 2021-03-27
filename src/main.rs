@@ -51,6 +51,7 @@ fn init() {
 	lcd::lcd_api::init();
 	debug::init();
 	
+	battery::init();
 	button::init();
 	clock::init();
 	touch::init();
@@ -63,6 +64,7 @@ fn task_handler(d: &mut app::DeviceInfo) {
 	mcu::task_handler(d);
 	
 	debug::task_handler(d);
+	battery::task_handler(d);
 	button::task_handler(d);
 	clock::task_handler(d);
 	// lcd::lcd_api::task_handler();

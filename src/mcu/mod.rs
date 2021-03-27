@@ -6,6 +6,7 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+pub mod adc;
 pub mod gpio;
 pub mod i2c;
 pub mod input;
@@ -35,6 +36,7 @@ pub fn init(wake_interval: rtc::WakeInterval) {
 	peripherals.CLOCK.tasks_hfclkstart.write(|w| unsafe { w.bits(1) });
 	while peripherals.CLOCK.events_hfclkstarted.read().bits() == 0 {};
 
+	adc::init(peripherals.SAADC);
 	gpio::init(peripherals.P0);
 	input::init(peripherals.GPIOTE);
 	i2c::init(peripherals.TWI1);

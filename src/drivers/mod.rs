@@ -7,6 +7,7 @@
 // Crates and Mods
 //==============================================================================
 pub mod app;
+pub mod battery;
 pub mod button;
 pub mod clock;
 pub mod debug;
