@@ -123,11 +123,13 @@ fn read_event() -> TouchEvent {
 		pressure: get_pressure(buf[8])
 	};
 
-	debug::push_log_number("gesture: ", &(touch.gesture as u32));
-	debug::push_log_number("event: ", &(touch.event as u32));
-	debug::push_log_number("x: ", &(touch.x as u32));
-	debug::push_log_number("y: ", &(touch.y as u32));
-	debug::push_log_number("pressure: ", &(touch.pressure as u32));
+	if debug::is_enabled() {
+		debug::push_log_number("gesture: ", &(touch.gesture as u32));
+		debug::push_log_number("event: ", &(touch.event as u32));
+		debug::push_log_number("x: ", &(touch.x as u32));
+		debug::push_log_number("y: ", &(touch.y as u32));
+		debug::push_log_number("pressure: ", &(touch.pressure as u32));
+	}
 
 	touch
 }
@@ -150,15 +152,15 @@ fn touch_handler() {
 // Task Handler
 //==============================================================================
 pub fn task_handler(d: &mut app::DeviceInfo) {
-	if d.flags.touch_event {
-		d.flags.touch_event = false;
+	if d.change_flags.touch_event {
+		d.change_flags.touch_event = false;
 	}
 
 	unsafe { 
 		if UNHANDLED_EVENTS {
 			UNHANDLED_EVENTS = false;
 			d.touch = read_event();
-			d.flags.touch_event = true;
+			d.change_flags.touch_event = true;
 		}
 	}
 }
