@@ -13,15 +13,26 @@ pub mod app;
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-pub struct DeviceInfoFlags{
+pub struct DeviceInfoChangeFlags{
+	pub battery_voltage: bool,
 	pub button_press: bool,
+	pub charger_state: bool,
+	pub debug_log: bool,
+	pub time_change: bool,
+	pub touch_event: bool,
+}
+
+pub struct DeviceInfoFlags{
+	pub charger_connected: bool,
+	pub button_pressed: bool,
 	pub debug_log_active: bool,
-	pub touch_event: bool
 }
 
 pub struct DeviceInfo {
+	pub change_flags: DeviceInfoChangeFlags,
 	pub flags: DeviceInfoFlags,
-	pub button_press_count: u8,
+
+	pub battery_voltage: u16,
 	pub time: drivers::clock::Time,
 	pub touch: drivers::touch::TouchEvent
 }
@@ -38,12 +49,20 @@ pub enum AppState {
 static mut DEVICE_INFO: bool = false;
 
 const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
-	flags: DeviceInfoFlags {
+	change_flags: DeviceInfoChangeFlags {
+		battery_voltage: false,
 		button_press: false,
-		debug_log_active: true,
+		charger_state: false,
+		debug_log: false,
+		time_change: false,
 		touch_event: false
 	},
-	button_press_count: 0,
+	flags: DeviceInfoFlags {
+		charger_connected: false,
+		button_pressed: false,
+		debug_log_active: true,
+	},
+	battery_voltage: 0,
 	time: drivers::clock::Time {
 		hours: 0,
 		minutes: 0, 
