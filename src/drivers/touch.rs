@@ -6,8 +6,9 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use crate::app::info;
 use crate::config;
-use crate::drivers::{app, debug};
+use crate::drivers::debug;
 use crate::mcu::{gpio, input, i2c};
 
 //==============================================================================
@@ -151,7 +152,7 @@ fn touch_handler() {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(d: &mut app::DeviceInfo) {
+pub fn task_handler(d: &mut info::DeviceInfo) {
 	if d.change_flags.touch_event {
 		d.change_flags.touch_event = false;
 	}

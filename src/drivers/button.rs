@@ -7,11 +7,12 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use crate::app::info;
 use crate::config;
 use crate::mcu::{gpio, input};
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
 use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
-use super::{app, debug};
+use super::debug;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -67,7 +68,11 @@ fn press_handler() {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(d: &mut app::DeviceInfo) {
+pub fn task_handler(d: &mut info::DeviceInfo) {
+	if d.change_flags.button_press {
+		d.change_flags.button_press = false;
+	}
+
 	unsafe {
 		if UNHANDLED_PRESSES > 0 {
 			d.change_flags.button_press = true;

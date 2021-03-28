@@ -11,8 +11,8 @@
 //==============================================================================
 use core::cell::Cell;
 use cortex_m::interrupt::{free, Mutex};
+use crate::app::info;
 use crate::config;
-use super::app;
 use super::lcd::{lcd_api, font};
 
 //==============================================================================
@@ -33,21 +33,24 @@ struct LogLine{
  const DEBUG_SCALE: u16 = 2;
  const DEBUG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
  const DEBUG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
- const DEBUG_WELCOME: [char; 24] = [
+ const DEBUG_WELCOME: [char; LOG_MAX_LENGTH] = [
 	'*', '*', ' ', ' ', ' ', ' ', 'D', 'e', 'b', 'u', 'g', ' ', 
 	'O', 'u', 't', 'p', 'u', 't', ' ', ' ', ' ', ' ', '*', '*'
  ];
 
+const LOG_PREFIX_LENGTH: usize = 3;
+const LOG_MAX_LENGTH: usize = 24;
+const LOG_ACTUAL_LEN: usize = LOG_MAX_LENGTH - LOG_PREFIX_LENGTH;
 static LOG_LINES_ACTIVE: Mutex<Cell<usize>> = Mutex::new(Cell::new(0));
 static LOG_LINE_COUNT: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 const LOG_LINE_ENTRIES: usize = 5;
 static LOG_LINES: Mutex<Cell<[LogLine; 6]>> = Mutex::new(Cell::new( [
 	LogLine { active: true, stale: true, line: DEBUG_WELCOME },
-	LogLine { active: false, stale: true, line: [ '-'; 24 ] },
-	LogLine { active: false, stale: true, line: [ '-'; 24 ] },
-	LogLine { active: false, stale: true, line: [ '-'; 24 ] },
-	LogLine { active: false, stale: true, line: [ '-'; 24 ] },
-	LogLine { active: false, stale: true, line: [ '-'; 24 ] }
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] }
 ]));
 
 //==============================================================================
@@ -70,7 +73,7 @@ pub fn push_log(string: &'static str) {
 	free(|cs| LOG_LINES_ACTIVE.borrow(cs).set(LOG_LINES_ACTIVE.borrow(cs).get() + 1));
 	
 	let index = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
-	let len = if string.len() > 21 { 21 } else { string.len() };
+	let len = if string.len() < LOG_ACTUAL_LEN { string.len()} else { LOG_ACTUAL_LEN };
 	let string = string.as_bytes();
 	let count = free(|cs| LOG_LINE_COUNT.borrow(cs).get());
 	let count = if count + 1 == 100 { 0 } else { count + 1 };
@@ -106,7 +109,7 @@ pub fn push_log_number(string: &'static str, num: &u32) {
 	free(|cs| LOG_LINES_ACTIVE.borrow(cs).set(LOG_LINES_ACTIVE.borrow(cs).get() + 1));
 	
 	let index = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
-	let string_len = if string.len() > 21 { 21 } else { string.len() };
+	let string_len = if string.len() < LOG_ACTUAL_LEN { string.len()} else { LOG_ACTUAL_LEN };
 	let string = string.as_bytes();
 	let count = free(|cs| LOG_LINE_COUNT.borrow(cs).get());
 	let count = if count + 1 == 100 { 0 } else { count + 1 };
@@ -135,7 +138,7 @@ pub fn push_log_number(string: &'static str, num: &u32) {
 			div *= 10;
 		}
 
-		if string_len + num_len < 21 {
+		if string_len + num_len <= LOG_ACTUAL_LEN {
 			log_lines[index].line[string_len+num_len+3] = 0 as char;
 		}
 
@@ -216,7 +219,7 @@ fn write_line(line_number: usize) {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(d: &app::DeviceInfo) {
+pub fn task_handler(d: &info::DeviceInfo) {
 	if d.flags.debug_log_active {
 		let len = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
 

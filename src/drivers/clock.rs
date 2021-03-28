@@ -8,7 +8,8 @@
 //==============================================================================
 use core::cell::Cell;
 use cortex_m::interrupt::{free, Mutex};
-use crate::drivers::{app, lcd};
+use crate::app::info;
+use crate::drivers::lcd;
 use crate::mcu::rtc;
 
 //==============================================================================
@@ -115,17 +116,21 @@ fn update_add_second() {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(d: &mut app::DeviceInfo) {
+pub fn task_handler(d: &mut info::DeviceInfo) {
 	static mut LAST_TIMESTAMP: u32 = 0;
+
+	if d.change_flags.time_change {
+		d.change_flags.time_change = false;
+	}
 
 	unsafe {
 		if rtc::get_timediff(LAST_TIMESTAMP) >= 1 {
 			LAST_TIMESTAMP = rtc::get_timestamp();
 			update_add_second();
+			d.change_flags.time_change = true;
 			d.time = free(|cs| TIME.borrow(cs).get());
 
 			write_time();
 		}
 	}
-
 }

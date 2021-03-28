@@ -7,10 +7,10 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use crate::app::info;
 use crate::config;
 use super::debug;
 use crate::mcu::{adc, gpio, input, rtc};
-use super::app;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -74,10 +74,17 @@ fn get_battery_voltage() -> u16 {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(d: &mut app::DeviceInfo) {
+pub fn task_handler(d: &mut info::DeviceInfo) {
 	static mut LAST_BATTERY_TIMESTAMP: u32 = 0;
 	static mut LAST_BATTERY_VOLTAGE: u16 = 0;
 	static mut LAST_CHARGER_CONNECTED: bool = false;
+
+	if d.change_flags.battery_voltage {
+		d.change_flags.battery_voltage = false;
+	}
+	if d.change_flags.charger_state {
+		d.change_flags.charger_state = false;
+	}
 
 	unsafe {
 		if rtc::get_timediff(LAST_BATTERY_TIMESTAMP) > BATTERY_CHECK_INTERVAL {
@@ -97,8 +104,13 @@ pub fn task_handler(d: &mut app::DeviceInfo) {
 
 		if LAST_CHARGER_CONNECTED != CHARGER_CONNECTED {
 			LAST_CHARGER_CONNECTED = CHARGER_CONNECTED;
-			d.flags.charger_connected = true;
-			d.flags.charger_connected = true;
+			d.change_flags.charger_state = true;
+			d.flags.charger_connected = CHARGER_CONNECTED;
+
+			if debug::is_enabled() {
+				debug::push_log_number("Charger state: ", &( 
+					if CHARGER_CONNECTED { 1 } else { 0 }));
+			}
 		}
 	}
 }
