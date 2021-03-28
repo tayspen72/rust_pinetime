@@ -1,23 +1,14 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// main.rs
+// drivers::app::app.rs
+// Top level app behavior
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-#![no_std]
-#![no_main]
-
-use cortex_m_rt::entry;
-use panic_halt as _; // Breakpoint on `rust_begin_unwind` to catch panics
-
-mod app;
-use app::info;
-mod config;
-mod drivers;
-use drivers::*;
-mod mcu;
+use crate::drivers::*;
+use crate::mcu::*;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -30,47 +21,29 @@ mod mcu;
 
 
 //==============================================================================
-// Main
+// Public Functions
 //==============================================================================
-#[entry]
-fn main() -> ! {
+pub fn get_state() -> super::info::AppState {
+    if lcd::lcd_api::get_busy() {
+        return super::info::AppState::BusyLcd;
+    }
+    else if timer::get_busy() {
+        return super::info::AppState::BusyTimer;
+    }
 
-	init();
-	
-	let mut device_info = info::DeviceInfo::take().unwrap();
-
-	loop {
-		task_handler(&mut device_info);
-	};
+    super::info::AppState::Idle
 }
 
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn init() {
-	mcu::init(mcu::rtc::WakeInterval::Interval250MS);
 
-	lcd::lcd_api::init();
-	debug::init();
-	
-	battery::init();
-	button::init();
-	clock::init();
-	touch::init();
-}
+
+//==============================================================================
+// Interrupt Handler
+//==============================================================================
+
 
 //==============================================================================
 // Task Handler
 //==============================================================================
-fn task_handler(d: &mut info::DeviceInfo) {
-	mcu::task_handler(d);
-	
-	debug::task_handler(d);
-	battery::task_handler(d);
-	button::task_handler(d);
-	clock::task_handler(d);
-	// lcd::lcd_api::task_handler();
-	touch::task_handler(d);
-
-	app::task_handler();
-}

@@ -6,9 +6,7 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use cortex_m::asm::wfi;
 use crate::drivers;
-pub mod app;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -21,7 +19,6 @@ pub struct DeviceInfoChangeFlags{
 	pub time_change: bool,
 	pub touch_event: bool,
 }
-
 pub struct DeviceInfoFlags{
 	pub charger_connected: bool,
 	pub button_pressed: bool,
@@ -97,7 +94,7 @@ impl DeviceInfo {
 }
 
 //==============================================================================
-// Private Functions
+// Private Functionsz
 //==============================================================================
 
 
@@ -109,10 +106,3 @@ impl DeviceInfo {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler() {
-	let state = app::get_state();
-	match state {
-		AppState::Idle => wfi(),
-		_ => ()
-	}
-}
