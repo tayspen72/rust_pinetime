@@ -1,19 +1,12 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// app::mod.rs
+// app::icon.rs
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-pub mod app;
-pub mod display;
-mod icon;
-pub mod info;
-
-use cortex_m::asm::wfi;
-use super::drivers;
-use super::mcu;
+use crate::drivers::lcd::lcd_api;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -24,6 +17,12 @@ use super::mcu;
 // Variables
 //==============================================================================
 
+// Battery and Charger
+pub const BATTERY_ICON_X: u16 = 1;
+pub const BATTERY_ICON_Y: u16 = 1;
+pub const BATTERY_OUTLINE_COLOR: lcd_api::Color = lcd_api::Color::White;
+pub const BATTERY_FILL_COLOR: lcd_api::Color = lcd_api::Color::Black;
+pub const CHARGER_COLOR: lcd_api::Color = lcd_api::Color::Green;
 
 //==============================================================================
 // Public Functions
@@ -33,20 +32,7 @@ use super::mcu;
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
-	if flags.battery_voltage ||
-		flags.button_press ||
-		flags.charger_state ||
-		flags.debug_log ||
-		flags.display_state ||
-		flags.time_change ||
-		flags.touch_event {
-			true
-	}
-	else {
-		false
-	}
-}
+
 
 //==============================================================================
 // Interrupt Handler
@@ -56,18 +42,3 @@ fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(d: &mut info::DeviceInfo) {
-	// Call the needed sub task handlers
-	display::task_handler(d);
-
-	let app_busy = get_unhandled_flags(&d.change_flags);
-	let drivers_busy = 
-		if let drivers::DriversState::Idle = drivers::get_busy(){ false } else { true };
-	let mcu_busy = 
-		if let mcu::McuState::Idle = mcu::get_busy() { false } else { true };
-
-	// If nothing is busy, sleep
-	if !app_busy && !drivers_busy && !mcu_busy {
-		wfi();
-	}
-}
