@@ -7,6 +7,7 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use super::info;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -28,7 +29,20 @@ pub enum AppPage {
 //==============================================================================
 // Public Functions
 //==============================================================================
-
+pub fn page_handler(d: &mut info::DeviceInfo){
+	// Handle all input events and route them to pages as needed
+	match d.app_page {
+		AppPage::Home => (),
+		AppPage::Notifications => (),
+		AppPage::Log => (),
+		AppPage::Settings => (),
+		AppPage::Startup => {
+			// If in startup, change to home
+			d.app_page = AppPage::Home;
+			d.change_flags.app_page = true;
+		},
+	}
+}
 
 //==============================================================================
 // Private Functions
