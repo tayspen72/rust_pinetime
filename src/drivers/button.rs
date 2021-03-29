@@ -80,13 +80,11 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 			HEAD = if (HEAD + 1) < PRESS_QUEUE_LENGTH { HEAD + 1 } else { 0 };
 			UNHANDLED_PRESSES = UNHANDLED_PRESSES - 1;
 
-			if debug::is_enabled() {
-				if d.flags.button_pressed {
-					debug::push_log("Button pressed!");
-				}
-				else {
-					debug::push_log("Button released!");
-				}
+			if d.flags.button_pressed {
+				debug::push_log("Button pressed!");
+			}
+			else {
+				debug::push_log("Button released!");
 			}
 		}
 	}

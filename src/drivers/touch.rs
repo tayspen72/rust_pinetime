@@ -124,13 +124,11 @@ fn read_event() -> TouchEvent {
 		pressure: get_pressure(buf[8])
 	};
 
-	if debug::is_enabled() {
-		debug::push_log_number("gesture: ", &(touch.gesture as u32));
-		debug::push_log_number("event: ", &(touch.event as u32));
-		debug::push_log_number("x: ", &(touch.x as u32));
-		debug::push_log_number("y: ", &(touch.y as u32));
-		debug::push_log_number("pressure: ", &(touch.pressure as u32));
-	}
+	debug::push_log_number("gesture: ", &(touch.gesture as u32));
+	debug::push_log_number("event: ", &(touch.event as u32));
+	debug::push_log_number("x: ", &(touch.x as u32));
+	debug::push_log_number("y: ", &(touch.y as u32));
+	debug::push_log_number("pressure: ", &(touch.pressure as u32));
 
 	touch
 }

@@ -12,7 +12,6 @@
 use core::cell::Cell;
 use cortex_m::interrupt::{free, Mutex};
 use crate::app::info;
-use crate::config;
 use super::lcd::{lcd_api, font};
 
 //==============================================================================
@@ -58,10 +57,6 @@ static LOG_LINES: Mutex<Cell<[LogLine; 6]>> = Mutex::new(Cell::new( [
 //==============================================================================
 pub fn init() {
 
-}
-
-pub fn is_enabled() -> bool {
-	config::DEBUG_ENABLED
 }
 
 #[allow(dead_code)]

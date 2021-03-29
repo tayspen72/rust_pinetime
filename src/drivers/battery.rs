@@ -15,7 +15,15 @@ use crate::mcu::{adc, gpio, input, rtc};
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-
+#[allow(dead_code)]
+#[derive(Clone, Copy)]
+pub enum BatteryLevel{
+	Level4 = 4,
+	Level3 = 3,
+	Level2 = 2,
+	Level1 = 1,
+	Level0 = 0
+}
 
 //==============================================================================
 // Variables
@@ -90,10 +98,8 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 		if rtc::get_timediff(LAST_BATTERY_TIMESTAMP) > BATTERY_CHECK_INTERVAL {
 			LAST_BATTERY_TIMESTAMP = rtc::get_timestamp();
 			let tmp_voltage = get_battery_voltage();
-
-			if debug::is_enabled() {
-				debug::push_log_number("Battery voltage: ", &(tmp_voltage as u32));
-			}
+			
+			debug::push_log_number("Battery: ", &(tmp_voltage as u32));
 			
 			if LAST_BATTERY_VOLTAGE != tmp_voltage {
 				LAST_BATTERY_VOLTAGE = tmp_voltage;
@@ -107,10 +113,8 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 			d.change_flags.charger_state = true;
 			d.flags.charger_connected = CHARGER_CONNECTED;
 
-			if debug::is_enabled() {
-				debug::push_log_number("Charger state: ", &( 
-					if CHARGER_CONNECTED { 1 } else { 0 }));
-			}
+			debug::push_log_number("Charger state: ", &( 
+				if CHARGER_CONNECTED { 1 } else { 0 }));
 		}
 	}
 }
