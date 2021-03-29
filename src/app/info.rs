@@ -35,6 +35,7 @@ pub struct DeviceInfo {
 
 	pub app_page: app::AppPage,
 	pub battery_voltage: u16,
+	pub battery_level: drivers::battery::BatteryLevel,
 	pub display_state: display::DisplayState,
 	pub time: drivers::clock::Time,
 	pub touch: drivers::touch::TouchEvent
@@ -60,9 +61,10 @@ const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
 		button_pressed: false,
 		debug_log_active: true,
 	},
-	app_page: app::AppPage::Startup,
+	app_page: app::AppPage::Home,
+	battery_level: drivers::battery::BatteryLevel::Level4,
 	battery_voltage: 0,
-	display_state: display::DisplayState::Off,
+	display_state: display::DisplayState::On,
 	time: drivers::clock::Time {
 		hours: 0,
 		minutes: 0, 
