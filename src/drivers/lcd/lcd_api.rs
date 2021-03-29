@@ -6,16 +6,15 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-// use crate::config;
-// use crate::mcu::spi;
+use crate::app::{app, info};
 use super::{images, lcd, st7789};
 use crate::mcu::timer;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-//TODO: Fix LCD colors
 #[allow(dead_code)]
+#[derive(Clone, Copy)]
 pub enum Color { // 5-6-5		R,  G,  B
 	Black		= 0x0000,	//  0,  0,  0
 	Red			= 0x00F8,	// 1F, 00, 00
@@ -37,42 +36,12 @@ pub enum Color { // 5-6-5		R,  G,  B
 
 
 //==============================================================================
-// Private Functions
+// Public Functions
 //==============================================================================
 pub fn init() {
 	lcd::init();
 
-	fill_background(Color::White);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
-	write_splash();
-	timer::delay(2000);
-
 	lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
-	fill_background(Color::Black);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
-	fill_rectangle(0, 79, 0, 79, Color::Black);
-	fill_rectangle(81, 78, 0, 79, Color::Red);
-	fill_rectangle(161, 79, 0, 79, Color::Orange);
-	fill_rectangle(0, 79, 81, 78, Color::Yellow);
-	fill_rectangle(81, 78, 81, 78, Color::Green);
-	fill_rectangle(161, 79, 81, 78, Color::Cyan);
-	fill_rectangle(0, 79, 161, 79, Color::Blue);
-	fill_rectangle(81, 78, 161, 79, Color::Magenta);
-	fill_rectangle(161, 79, 161, 79, Color::White);
-	timer::delay(2000);
-
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
-	fill_background(Color::Black);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
 }
 
 pub fn get_busy() -> bool {
@@ -118,9 +87,56 @@ fn write_splash() {
 }
 
 //==============================================================================
-// Public Functions
+// Private Functions
 //==============================================================================
+fn print_page(page: app::AppPage){
+	match page {
+		// On home, only update items that need updating
+		app::AppPage::Home => (),
+		app::AppPage::Notifications => (),
+		app::AppPage::Log => (),
+		app::AppPage::Settings => (),
 
+		// For startup, just show the whole startup sequence
+		app::AppPage::Startup => {
+			fill_background(Color::White);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
+			write_splash();
+			timer::delay(2000);
+
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
+			fill_background(Color::Black);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
+			fill_rectangle(0, 79, 0, 79, Color::Black);
+			fill_rectangle(81, 78, 0, 79, Color::Red);
+			fill_rectangle(161, 79, 0, 79, Color::Orange);
+			fill_rectangle(0, 79, 81, 78, Color::Yellow);
+			fill_rectangle(81, 78, 81, 78, Color::Green);
+			fill_rectangle(161, 79, 81, 78, Color::Cyan);
+			fill_rectangle(0, 79, 161, 79, Color::Blue);
+			fill_rectangle(81, 78, 161, 79, Color::Magenta);
+			fill_rectangle(161, 79, 161, 79, Color::White);
+			timer::delay(2000);
+
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
+			fill_background(Color::Black);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
+			lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
+		}
+	}
+}
 
 //==============================================================================
 // Interrupt Handler
@@ -130,4 +146,16 @@ fn write_splash() {
 //==============================================================================
 // Task Handler
 //==============================================================================
-
+pub fn task_handler(d: &mut info::DeviceInfo) {
+	if d.change_flags.app_page{
+		match d.app_page {
+			app::AppPage::Home => (),
+			app::AppPage::Notifications => (),
+			app::AppPage::Log => (),
+			app::AppPage::Settings => (),
+			app::AppPage::Startup => {
+				print_page(app::AppPage::Startup);
+			}
+		}
+	}
+}
