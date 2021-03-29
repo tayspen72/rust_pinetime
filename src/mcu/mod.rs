@@ -20,7 +20,14 @@ use crate::app::info;
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
+#[allow(dead_code)]
+pub enum McuState {
+	AdcBusy,
+	SpiBusy,
+	TimerBusy,
 
+	Idle
+}
 
 //==============================================================================
 // Variables
@@ -43,6 +50,20 @@ pub fn init(wake_interval: rtc::WakeInterval) {
 	rtc::init(peripherals.RTC0, &peripherals.CLOCK, wake_interval);
 	spi::init(peripherals.SPI0, peripherals.SPIM0);
 	timer::init(peripherals.TIMER0);
+}
+
+pub fn get_busy() -> McuState {
+	if adc::get_busy() {
+		return McuState::AdcBusy;
+	}
+	
+	if spi::get_busy() {
+		return McuState::SpiBusy;
+	}
+	if timer::get_busy() {
+		return McuState::TimerBusy;
+	}
+	McuState::Idle
 }
 
 //==============================================================================
