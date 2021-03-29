@@ -45,6 +45,11 @@ pub fn init(adc: nrf52832_pac::SAADC){
 	free(|cs| ADC_HANDLE.borrow(cs).replace(Some(adc)));
 }
 
+pub fn get_busy() -> bool {
+	// Will always be a blocking call. Return false
+	false
+}
+
 pub fn read_adc() -> u16 {
 	free(|cs| {
 		if let Some(ref mut adc) = ADC_HANDLE.borrow(cs).borrow_mut().deref_mut() {

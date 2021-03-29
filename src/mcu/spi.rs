@@ -67,6 +67,13 @@ pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
 	free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(spim0)));
 }
 
+pub fn get_busy() -> bool {
+	// TODO: When DMA working, maybe make handled by interrupt?
+	// For now, return false
+
+	false
+}
+
 pub fn write_data(data: &ArrayList, use_dma: bool) {
 	let mut num_bytes = data.len();
 	let mut index = 0;
