@@ -129,8 +129,6 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 			update_add_second();
 			d.change_flags.time_change = true;
 			d.time = free(|cs| TIME.borrow(cs).get());
-
-			write_time();
 		}
 	}
 }

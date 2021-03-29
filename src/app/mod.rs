@@ -56,13 +56,13 @@ fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
 // Task Handler
 //==============================================================================
 pub fn task_handler(d: &mut info::DeviceInfo) {
-	// Call the needed sub task handlers
-	display::task_handler(d);
-
 	// If the page change flag is set, clear it
 	if d.change_flags.app_page {
 		d.change_flags.app_page = false;
 	}
+
+	// Call the needed sub task handlers
+	display::task_handler(d);
 
 	// handle any pending tasks on the current page
 	app::page_handler(d);

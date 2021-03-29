@@ -60,6 +60,24 @@ fn connect_handler() {
 		}};
 }
 
+fn get_battery_level(voltage: u16) -> BatteryLevel {
+	if voltage > 350 {
+		BatteryLevel::Level4
+	}
+	else if voltage > 340 {
+		BatteryLevel::Level3
+	}
+	else if voltage > 330 {
+		BatteryLevel::Level2
+	}
+	else if voltage > 320 {
+		BatteryLevel::Level1
+	}
+	else {
+		BatteryLevel::Level0
+	}
+}
+
 fn get_battery_voltage() -> u16 {
 	// Voltage divider by half (R1 = R2 = 1M)
 	// 12-bit number
@@ -84,6 +102,7 @@ fn get_battery_voltage() -> u16 {
 //==============================================================================
 pub fn task_handler(d: &mut info::DeviceInfo) {
 	static mut LAST_BATTERY_TIMESTAMP: u32 = 0;
+	static mut LAST_BATTERY_STATE: u8 = 0;
 	static mut LAST_BATTERY_VOLTAGE: u16 = 0;
 	static mut LAST_CHARGER_CONNECTED: bool = false;
 
@@ -105,6 +124,12 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 				LAST_BATTERY_VOLTAGE = tmp_voltage;
 				d.change_flags.battery_voltage = true;
 				d.battery_voltage = tmp_voltage;
+
+				let tmp_level: u8 = get_battery_level(tmp_voltage) as u8;
+				if LAST_BATTERY_STATE != tmp_level {
+					LAST_BATTERY_STATE = tmp_level;
+					d.battery_level = get_battery_level(tmp_voltage);
+				}
 			}
 		}
 

@@ -33,8 +33,8 @@ struct LogLine{
  const DEBUG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
  const DEBUG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
  const DEBUG_WELCOME: [char; LOG_MAX_LENGTH] = [
-	'*', '*', ' ', ' ', ' ', ' ', 'D', 'e', 'b', 'u', 'g', ' ', 
-	'O', 'u', 't', 'p', 'u', 't', ' ', ' ', ' ', ' ', '*', '*'
+	'*', '*', ' ', 'L', 'o', 'g', ' ', 'O', 'u', 't', 'p', 'u', 
+	't', ' ', 'W', 'i', 'n', 'd', 'o', 'w', ' ', ' ', '*', '*'
  ];
 
 const LOG_PREFIX_LENGTH: usize = 3;
@@ -42,9 +42,18 @@ const LOG_MAX_LENGTH: usize = 24;
 const LOG_ACTUAL_LEN: usize = LOG_MAX_LENGTH - LOG_PREFIX_LENGTH;
 static LOG_LINES_ACTIVE: Mutex<Cell<usize>> = Mutex::new(Cell::new(0));
 static LOG_LINE_COUNT: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
-const LOG_LINE_ENTRIES: usize = 5;
-static LOG_LINES: Mutex<Cell<[LogLine; 6]>> = Mutex::new(Cell::new( [
+const LOG_LINE_ENTRIES: usize = 15;
+static LOG_LINES: Mutex<Cell<[LogLine; LOG_LINE_ENTRIES]>> = Mutex::new(Cell::new( [
 	LogLine { active: true, stale: true, line: DEBUG_WELCOME },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
 	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
 	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
 	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
