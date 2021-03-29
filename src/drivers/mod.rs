@@ -13,6 +13,8 @@ pub mod debug;
 pub mod lcd;
 pub mod touch;
 
+use crate::app::info;
+
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
@@ -36,6 +38,17 @@ pub enum DriversState{
 //==============================================================================
 // Public Functions
 //==============================================================================
+pub fn init() {
+	// Must be initialized in this order
+	lcd::lcd_api::init();
+	debug::init();
+	
+	battery::init();
+	button::init();
+	clock::init();
+	touch::init();
+}
+
 pub fn get_busy() -> DriversState {
     if lcd::lcd_api::get_busy() {
         return DriversState::BusyLcd;
@@ -52,3 +65,11 @@ pub fn get_busy() -> DriversState {
 //==============================================================================
 // Task Handler
 //==============================================================================
+pub fn task_handler(d: &mut info::DeviceInfo){
+	debug::task_handler(d);
+	battery::task_handler(d);
+	button::task_handler(d);
+	clock::task_handler(d);
+	lcd::lcd_api::task_handler(d);
+	touch::task_handler(d);
+}

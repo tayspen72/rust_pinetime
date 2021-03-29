@@ -16,7 +16,6 @@ mod app;
 use app::info;
 mod config;
 mod drivers;
-use drivers::*;
 mod mcu;
 
 //==============================================================================
@@ -49,14 +48,7 @@ fn main() -> ! {
 //==============================================================================
 fn init() {
 	mcu::init(mcu::rtc::WakeInterval::Interval250MS);
-
-	lcd::lcd_api::init();
-	debug::init();
-	
-	battery::init();
-	button::init();
-	clock::init();
-	touch::init();
+	drivers::init();
 }
 
 //==============================================================================
@@ -64,13 +56,7 @@ fn init() {
 //==============================================================================
 fn task_handler(d: &mut info::DeviceInfo) {
 	mcu::task_handler(d);
-	
-	debug::task_handler(d);
-	battery::task_handler(d);
-	button::task_handler(d);
-	clock::task_handler(d);
-	// lcd::lcd_api::task_handler();
-	touch::task_handler(d);
+	drivers::task_handler(d);
 
 	app::task_handler(d);
 }
