@@ -15,10 +15,10 @@ use super::display;
 // Enums, Structs, and Types
 //==============================================================================
 pub struct DeviceInfoChangeFlags{
+	pub app_page: bool,
 	pub battery_voltage: bool,
 	pub button_press: bool,
 	pub charger_state: bool,
-	pub debug_log: bool,
 	pub display_state: bool,
 	pub time_change: bool,
 	pub touch_event: bool,
@@ -48,10 +48,10 @@ static mut DEVICE_INFO: bool = false;
 
 const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
 	change_flags: DeviceInfoChangeFlags {
+		app_page: true,
 		battery_voltage: false,
 		button_press: false,
 		charger_state: false,
-		debug_log: false,
 		display_state: false,
 		time_change: false,
 		touch_event: false

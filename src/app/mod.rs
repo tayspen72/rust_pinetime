@@ -37,7 +37,6 @@ fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
 	if flags.battery_voltage ||
 		flags.button_press ||
 		flags.charger_state ||
-		flags.debug_log ||
 		flags.display_state ||
 		flags.time_change ||
 		flags.touch_event {
@@ -59,6 +58,14 @@ fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
 pub fn task_handler(d: &mut info::DeviceInfo) {
 	// Call the needed sub task handlers
 	display::task_handler(d);
+
+	// If the page change flag is set, clear it
+	if d.change_flags.app_page {
+		d.change_flags.app_page = false;
+	}
+
+	// handle any pending tasks on the current page
+	app::page_handler(d);
 
 	let app_busy = get_unhandled_flags(&d.change_flags);
 	let drivers_busy = 
