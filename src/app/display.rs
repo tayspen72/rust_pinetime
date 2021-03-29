@@ -1,18 +1,13 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// app::mod.rs
+// app::display.rs
+// Display state enum and top level handling
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-pub mod app;
-pub mod display;
-pub mod info;
-
-use cortex_m::asm::wfi;
-use super::drivers;
-use super::mcu;
+use super::info;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -22,7 +17,12 @@ use super::mcu;
 //==============================================================================
 // Variables
 //==============================================================================
-
+#[allow(dead_code)]
+pub enum DisplayState {
+	On,
+	Dim,
+	Off
+}
 
 //==============================================================================
 // Public Functions
@@ -32,20 +32,7 @@ use super::mcu;
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
-	if flags.battery_voltage ||
-		flags.button_press ||
-		flags.charger_state ||
-		flags.debug_log ||
-		flags.display_state ||
-		flags.time_change ||
-		flags.touch_event {
-			true
-	}
-	else {
-		false
-	}
-}
+
 
 //==============================================================================
 // Interrupt Handler
@@ -56,17 +43,9 @@ fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
 // Task Handler
 //==============================================================================
 pub fn task_handler(d: &info::DeviceInfo) {
-	// Call the needed sub task handlers
-	display::task_handler(d);
-
-	let app_busy = get_unhandled_flags(&d.change_flags);
-	let drivers_busy = 
-		if let drivers::DriversState::Idle = drivers::get_busy(){ false } else { true };
-	let mcu_busy = 
-		if let mcu::McuState::Idle = mcu::get_busy() { false } else { true };
-
-	// If nothing is busy, sleep
-	if !app_busy && !drivers_busy && !mcu_busy {
-		wfi();
+	match d.display_state {
+		DisplayState::On => (),
+		DisplayState::Dim => (),
+		_ => ()
 	}
 }

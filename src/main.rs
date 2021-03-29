@@ -72,5 +72,5 @@ fn task_handler(d: &mut info::DeviceInfo) {
 	// lcd::lcd_api::task_handler();
 	touch::task_handler(d);
 
-	app::task_handler();
+	app::task_handler(d);
 }

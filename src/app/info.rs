@@ -1,12 +1,15 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// drivers::app::mod.rs
+// app::info.rs
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
 use crate::drivers;
+use super::app;
+use super::display;
+
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -16,6 +19,7 @@ pub struct DeviceInfoChangeFlags{
 	pub button_press: bool,
 	pub charger_state: bool,
 	pub debug_log: bool,
+	pub display_state: bool,
 	pub time_change: bool,
 	pub touch_event: bool,
 }
@@ -29,15 +33,11 @@ pub struct DeviceInfo {
 	pub change_flags: DeviceInfoChangeFlags,
 	pub flags: DeviceInfoFlags,
 
+	pub app_page: app::AppPage,
 	pub battery_voltage: u16,
+	pub display_state: display::DisplayState,
 	pub time: drivers::clock::Time,
 	pub touch: drivers::touch::TouchEvent
-}
-
-pub enum AppState {
-	BusyLcd,
-	BusyTimer,
-	Idle,
 }
 
 //==============================================================================
@@ -51,6 +51,7 @@ const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
 		button_press: false,
 		charger_state: false,
 		debug_log: false,
+		display_state: false,
 		time_change: false,
 		touch_event: false
 	},
@@ -59,7 +60,9 @@ const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
 		button_pressed: false,
 		debug_log_active: true,
 	},
+	app_page: app::AppPage::Startup,
 	battery_voltage: 0,
+	display_state: display::DisplayState::Off,
 	time: drivers::clock::Time {
 		hours: 0,
 		minutes: 0, 
