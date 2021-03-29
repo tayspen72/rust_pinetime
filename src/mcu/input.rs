@@ -91,10 +91,10 @@ fn configure(config: PinConfig, event: usize) {
 			});
 
 			// Enable the interrupt
-			gpiote.intenset.write(|w| unsafe { w.bits(1 << event) });
+			gpiote.intenset.modify(|_r, w| unsafe { w.bits(1 << event) });
 
 			// Just in case, clear any pending events that need handling
-			gpiote.events_in[event].write(|w| unsafe { w.bits(0) });
+			gpiote.events_in[event].modify(|_r, w| unsafe { w.bits(0) });
 		}
 	});
 
@@ -170,24 +170,24 @@ fn GPIOTE() {
 			}
 		}
 
-		// // grab the current tail position
-		// let tail: usize = free(|cs| TAIL.borrow(cs).get());
+		// grab the current tail position
+		let tail: usize = free(|cs| TAIL.borrow(cs).get());
 		
-		// // Update the tail pointer to the next available position
-		// free(|cs| TAIL.borrow(cs).set( {
-		// 	let mut tail = TAIL.borrow(cs).get() + 1;
-		// 	if tail == EVENT_LEN {
-		// 		tail = 0;
-		// 	}
-		// 	tail
-		// }));
+		// Update the tail pointer to the next available position
+		free(|cs| TAIL.borrow(cs).set( {
+			let mut tail = TAIL.borrow(cs).get() + 1;
+			if tail == EVENT_LEN {
+				tail = 0;
+			}
+			tail
+		}));
 
-		// // Push this event onto the queue
-		// free(|cs| { 
-		// 	let mut queue = QUEUE.borrow(cs).get();
-		// 	queue[tail] = e as u8;
-		// 	QUEUE.borrow(cs).set(queue);
-		// })
+		// Push this event onto the queue
+		free(|cs| { 
+			let mut queue = QUEUE.borrow(cs).get();
+			queue[tail] = e as u8;
+			QUEUE.borrow(cs).set(queue);
+		})
 	}
 }
 
