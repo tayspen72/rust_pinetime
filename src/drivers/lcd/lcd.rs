@@ -17,17 +17,7 @@ use super::st7789;
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-#[allow(dead_code)]
-pub enum BacklightBrightness {
-	Brightness0,
-	Brightness1,
-	Brightness2,
-	Brightness3,
-	Brightness4,
-	Brightness5,
-	Brightness6,
-	Brightness7
-}
+
 
 //==============================================================================
 // Variables
@@ -48,20 +38,20 @@ pub fn init() {
 	gpio::pin_setup(config::LCD_BACKLIGHT_LOW, DIR::OUTPUT, gpio::PinState::PinHigh, PULL::DISABLED);
 	gpio::pin_setup(config::LCD_BACKLIGHT_MID, DIR::OUTPUT, gpio::PinState::PinHigh, PULL::DISABLED);
 	gpio::pin_setup(config::LCD_BACKLIGHT_HIGH, DIR::OUTPUT, gpio::PinState::PinHigh, PULL::DISABLED);
-	set_backlight(BacklightBrightness::Brightness0);
+	set_backlight(0);
 }
 
-pub fn set_backlight(backlight: BacklightBrightness) {
-	let states = match backlight {
-		BacklightBrightness::Brightness0 => [ gpio::PinState::PinHigh, gpio::PinState::PinHigh, gpio::PinState::PinHigh ],
-		BacklightBrightness::Brightness1 => [ gpio::PinState::PinHigh, gpio::PinState::PinHigh, gpio::PinState::PinLow ],
-		BacklightBrightness::Brightness2 => [ gpio::PinState::PinHigh, gpio::PinState::PinLow, gpio::PinState::PinHigh ],
-		BacklightBrightness::Brightness3 => [ gpio::PinState::PinHigh, gpio::PinState::PinLow, gpio::PinState::PinLow ],
-		BacklightBrightness::Brightness4 => [ gpio::PinState::PinLow, gpio::PinState::PinHigh, gpio::PinState::PinHigh ],
-		BacklightBrightness::Brightness5 => [ gpio::PinState::PinLow, gpio::PinState::PinHigh, gpio::PinState::PinLow ],
-		BacklightBrightness::Brightness6 => [ gpio::PinState::PinLow, gpio::PinState::PinLow, gpio::PinState::PinHigh ],
-		BacklightBrightness::Brightness7 => [ gpio::PinState::PinLow, gpio::PinState::PinLow, gpio::PinState::PinLow ]
-	};
+pub fn set_backlight(backlight: u8) {
+	let mut states: [gpio::PinState; 3] = [gpio::PinState::PinHigh; 3];
+	for s in 0..3 {
+		states[s] = {
+			if backlight & (1 << s) == 0 {
+				gpio::PinState::PinHigh }
+			else {
+				gpio::PinState::PinLow
+			}
+		};
+	}
 
 	gpio::set_pin_state(config::LCD_BACKLIGHT_LOW, states[0]);
 	gpio::set_pin_state(config::LCD_BACKLIGHT_MID, states[1]);

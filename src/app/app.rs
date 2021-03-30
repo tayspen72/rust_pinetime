@@ -7,20 +7,13 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use super::info;
+use super::{display, info, page};
 use crate::drivers;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-#[allow(dead_code)]
-pub enum AppPage {
-	Home,
-	Notifications,
-	Log,
-	Settings,
-	Startup
-}
+
 
 //==============================================================================
 // Variables
@@ -30,48 +23,7 @@ pub enum AppPage {
 //==============================================================================
 // Public Functions
 //==============================================================================
-pub fn page_handler(d: &mut info::DeviceInfo){
-	// Handle all input events and route them to pages as needed
-	match d.app_page {
-		AppPage::Home => {
-			if d.change_flags.time_change {
-				drivers::clock::write_time();
-			}
 
-			if d.change_flags.touch_event {
-				match d.touch.gesture {
-					drivers::touch::Gesture::SlideUp => {
-						d.app_page = AppPage::Log;
-					},
-					drivers::touch::Gesture::SlideDown => (),
-					drivers::touch::Gesture::SlideRight => (),
-					drivers::touch::Gesture::SlideLeft => (),
-					// TODO: For now, don't do anything else
-					_ => (),
-				}
-			}
-		},
-		AppPage::Notifications => (),
-		AppPage::Log => {
-			if d.change_flags.touch_event {
-				match d.touch.gesture {
-					drivers::touch::Gesture::SlideDown => {
-						d.app_page = AppPage::Log
-					},
-					
-					// TODO: For now, don't do anything else
-					_ => (),
-				}
-			}
-		}
-		AppPage::Settings => (),
-		AppPage::Startup => {
-			// If in startup, change to home
-			d.app_page = AppPage::Home;
-			d.change_flags.app_page = true;
-		},
-	}
-}
 
 //==============================================================================
 // Private Functions
@@ -86,3 +38,50 @@ pub fn page_handler(d: &mut info::DeviceInfo){
 //==============================================================================
 // Task Handler
 //==============================================================================
+pub fn task_handler(d: &mut info::DeviceInfo){
+	// Call the needed sub task handlers
+	display::task_handler(d);
+
+	// Handle all input events and route them to pages as needed
+	match d.app_page {
+		page::AppPage::Home => {
+			if d.change_flags.time_change {
+				drivers::clock::write_time();
+			}
+
+			if d.change_flags.touch_event {
+				match d.touch.gesture {
+					drivers::touch::Gesture::SlideUp => {
+						d.app_page = page::AppPage::Log;
+						d.change_flags.app_page = true;
+					},
+					drivers::touch::Gesture::SlideDown => (),
+					drivers::touch::Gesture::SlideRight => (),
+					drivers::touch::Gesture::SlideLeft => (),
+					// TODO: For now, don't do anything else
+					_ => (),
+				}
+			}
+		},
+		page::AppPage::Notifications => (),
+		page::AppPage::Log => {
+			if d.change_flags.touch_event {
+				match d.touch.gesture {
+					drivers::touch::Gesture::SlideDown => {
+						d.app_page = page::AppPage::Log;
+						d.change_flags.app_page = true;
+					},
+					
+					// TODO: For now, don't do anything else
+					_ => (),
+				}
+			}
+		}
+		page::AppPage::Settings => (),
+		page::AppPage::Startup => {
+			// If in startup, change to home
+			d.app_page = page::AppPage::Home;
+			d.change_flags.app_page = true;
+		},
+	}
+}

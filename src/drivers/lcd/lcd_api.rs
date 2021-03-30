@@ -6,13 +6,23 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use crate::app::{app, info};
 use super::{images, lcd, st7789};
-use crate::mcu::timer;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
+#[allow(dead_code)]
+pub enum BacklightBrightness {
+	Brightness0 = 0,
+	Brightness1 = 1,
+	Brightness2 = 2,
+	Brightness3 = 3,
+	Brightness4 = 4,
+	Brightness5 = 5,
+	Brightness6 = 6,
+	Brightness7 = 7
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Copy)]
 pub enum Color { // 5-6-5		R,  G,  B
@@ -41,7 +51,7 @@ pub enum Color { // 5-6-5		R,  G,  B
 pub fn init() {
 	lcd::init();
 
-	lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
+	lcd::set_backlight(BacklightBrightness::Brightness0 as u8);
 }
 
 pub fn get_busy() -> bool {
@@ -58,6 +68,12 @@ pub fn fill_rectangle(x: u16, width: u16, y: u16, height: u16, color: Color) {
 	set_window(x, width, y, height);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	lcd::write_block_solid(color as u16, (width*height) as u32);
+}
+
+#[allow(dead_code)]
+pub fn set_backlight(target_brightness: BacklightBrightness) {
+	// TODO: have this fade?
+	lcd::set_backlight(target_brightness as u8);
 }
 
 pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
@@ -80,7 +96,7 @@ pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
 }
 
 #[allow(dead_code)]
-fn write_splash() {
+pub fn write_splash() {
 	set_window(39, 160, 59, 106);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
 	lcd::write_block(&images::RUSTACEAN);
@@ -89,54 +105,7 @@ fn write_splash() {
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn print_page(page: app::AppPage){
-	match page {
-		// On home, only update items that need updating
-		app::AppPage::Home => (),
-		app::AppPage::Notifications => (),
-		app::AppPage::Log => (),
-		app::AppPage::Settings => (),
 
-		// For startup, just show the whole startup sequence
-		app::AppPage::Startup => {
-			fill_background(Color::White);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
-			write_splash();
-			timer::delay(2000);
-
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
-			fill_background(Color::Black);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
-			fill_rectangle(0, 79, 0, 79, Color::Black);
-			fill_rectangle(81, 78, 0, 79, Color::Red);
-			fill_rectangle(161, 79, 0, 79, Color::Orange);
-			fill_rectangle(0, 79, 81, 78, Color::Yellow);
-			fill_rectangle(81, 78, 81, 78, Color::Green);
-			fill_rectangle(161, 79, 81, 78, Color::Cyan);
-			fill_rectangle(0, 79, 161, 79, Color::Blue);
-			fill_rectangle(81, 78, 161, 79, Color::Magenta);
-			fill_rectangle(161, 79, 161, 79, Color::White);
-			timer::delay(2000);
-
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness0);
-			fill_background(Color::Black);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness1);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness2);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness3);
-			lcd::set_backlight(lcd::BacklightBrightness::Brightness4);
-		}
-	}
-}
 
 //==============================================================================
 // Interrupt Handler
@@ -146,16 +115,4 @@ fn print_page(page: app::AppPage){
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(d: &mut info::DeviceInfo) {
-	if d.change_flags.app_page{
-		match d.app_page {
-			app::AppPage::Home => (),
-			app::AppPage::Notifications => (),
-			app::AppPage::Log => (),
-			app::AppPage::Settings => (),
-			app::AppPage::Startup => {
-				print_page(app::AppPage::Startup);
-			}
-		}
-	}
-}
+

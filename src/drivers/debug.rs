@@ -11,7 +11,7 @@
 //==============================================================================
 use core::cell::Cell;
 use cortex_m::interrupt::{free, Mutex};
-use crate::app::{app, info};
+use crate::app::{info, page};
 use super::lcd::{lcd_api, font};
 
 //==============================================================================
@@ -224,7 +224,7 @@ fn write_line(line_number: usize) {
 // Task Handler
 //==============================================================================
 pub fn task_handler(d: &info::DeviceInfo) {
-	if let app::AppPage::Log = d.app_page {
+	if let page::AppPage::Log = d.app_page {
 		let len = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
 
 		for i in 0..=len {

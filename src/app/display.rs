@@ -7,7 +7,7 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use super::{app, icon, info};
+use super::{icon, info, page};
 use crate::drivers::lcd::{font, lcd_api};
 
 //==============================================================================
@@ -91,7 +91,7 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 	if d.change_flags.battery_voltage || d.change_flags.charger_state {
 		// Only update battery voltage when display is on and on home page
 		if let DisplayState::On = d.display_state {
-			if let app::AppPage::Home = d.app_page {
+			if let page::AppPage::Home = d.app_page {
 				write_battery_level(d.battery_level as u8, d.battery_voltage, d.flags.charger_connected);
 			}
 		}

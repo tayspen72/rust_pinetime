@@ -1,24 +1,28 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// drivers::mod.rs
+// app::page::mod.rs
 
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-pub mod battery;
-pub mod button;
-pub mod clock;
-pub mod debug;
-pub mod lcd;
-pub mod touch;
-
-use crate::app::info;
+pub mod home;
+pub mod log;
+pub mod notifications;
+pub mod settings;
+pub mod startup;
 
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-
+#[allow(dead_code)]
+pub enum AppPage {
+	Home,
+	Notifications,
+	Log,
+	Settings,
+	Startup
+}
 
 //==============================================================================
 // Variables
@@ -28,34 +32,12 @@ use crate::app::info;
 //==============================================================================
 // Public Functions
 //==============================================================================
-#[allow(dead_code)]
-pub enum DriversState{
-	BusyLcd,
-	
-	Idle,
-}
+
 
 //==============================================================================
-// Public Functions
+// Private Functions
 //==============================================================================
-pub fn init() {
-	// Must be initialized in this order
-	lcd::lcd_api::init();
-	debug::init();
-	
-	battery::init();
-	button::init();
-	clock::init();
-	touch::init();
-}
 
-pub fn get_busy() -> DriversState {
-    if lcd::lcd_api::get_busy() {
-        return DriversState::BusyLcd;
-    }
-
-    DriversState::Idle
-}
 
 //==============================================================================
 // Interrupt Handler
@@ -65,10 +47,23 @@ pub fn get_busy() -> DriversState {
 //==============================================================================
 // Task Handler
 //==============================================================================
-pub fn task_handler(d: &mut info::DeviceInfo){
-	debug::task_handler(d);
-	battery::task_handler(d);
-	button::task_handler(d);
-	clock::task_handler(d);
-	touch::task_handler(d);
+#[allow(dead_code)]
+pub fn task_handler(d: &mut crate::app::info::DeviceInfo) {
+	if d.change_flags.app_page{
+		match d.app_page {
+			AppPage::Home => home::print_page(),
+			AppPage::Notifications => notifications::print_page(),
+			AppPage::Log => log::print_page(),
+			AppPage::Settings => settings::print_page(),
+			AppPage::Startup => startup::print_page(),
+		}
+	}
+	match d.app_page {
+		AppPage::Home => home::task_handler(),
+		AppPage::Notifications => notifications::task_handler(),
+		AppPage::Log => log::task_handler(),
+		AppPage::Settings => settings::task_handler(),
+		AppPage::Startup => startup::task_handler(),
+	}
+
 }

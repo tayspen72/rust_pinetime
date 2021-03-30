@@ -7,9 +7,7 @@
 // Crates and Mods
 //==============================================================================
 use crate::drivers;
-use super::app;
-use super::display;
-
+use super::{ display, page};
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -33,7 +31,7 @@ pub struct DeviceInfo {
 	pub change_flags: DeviceInfoChangeFlags,
 	pub flags: DeviceInfoFlags,
 
-	pub app_page: app::AppPage,
+	pub app_page: page::AppPage,
 	pub battery_voltage: u16,
 	pub battery_level: drivers::battery::BatteryLevel,
 	pub display_state: display::DisplayState,
@@ -61,7 +59,7 @@ const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
 		button_pressed: false,
 		debug_log_active: true,
 	},
-	app_page: app::AppPage::Home,
+	app_page: page::AppPage::Startup,
 	battery_level: drivers::battery::BatteryLevel::Level4,
 	battery_voltage: 0,
 	display_state: display::DisplayState::On,
