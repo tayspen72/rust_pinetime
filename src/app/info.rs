@@ -7,7 +7,8 @@
 // Crates and Mods
 //==============================================================================
 use crate::drivers;
-use super::{ display, page};
+use crate::app;
+use app::page;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -21,6 +22,7 @@ pub struct DeviceInfoChangeFlags{
 	pub time_change: bool,
 	pub touch_event: bool,
 }
+
 pub struct DeviceInfoFlags{
 	pub charger_connected: bool,
 	pub button_pressed: bool,
@@ -34,7 +36,7 @@ pub struct DeviceInfo {
 	pub app_page: page::AppPage,
 	pub battery_voltage: u16,
 	pub battery_level: drivers::battery::BatteryLevel,
-	pub display_state: display::DisplayState,
+	pub display_state: app::DisplayState,
 	pub time: drivers::clock::Time,
 	pub touch: drivers::touch::TouchEvent
 }
@@ -62,7 +64,7 @@ const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
 	app_page: page::AppPage::Startup,
 	battery_level: drivers::battery::BatteryLevel::Level4,
 	battery_voltage: 0,
-	display_state: display::DisplayState::On,
+	display_state: app::DisplayState::On,
 	time: drivers::clock::Time {
 		hours: 0,
 		minutes: 0, 

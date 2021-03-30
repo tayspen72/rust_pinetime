@@ -6,9 +6,6 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-pub mod app;
-pub mod display;
-mod icon;
 pub mod info;
 pub mod page;
 
@@ -19,7 +16,12 @@ use super::mcu;
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-
+#[allow(dead_code)]
+pub enum DisplayState{
+	Off, 
+	Dim,
+	On
+}
 
 //==============================================================================
 // Variables
@@ -35,7 +37,8 @@ use super::mcu;
 // Private Functions
 //==============================================================================
 fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
-	if flags.battery_voltage ||
+	if flags.app_page ||
+		flags.battery_voltage ||
 		flags.button_press ||
 		flags.charger_state ||
 		flags.display_state ||
@@ -58,8 +61,22 @@ fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
 //==============================================================================
 pub fn task_handler(d: &mut info::DeviceInfo) {
 	// Handle any pending tasks on the current page
-	app::task_handler(d);
-
+// Handle all input events and route them to pages as needed
+	match d.app_page {
+		page::AppPage::Home => page::home::event_handler(d),
+		page::AppPage::Log => page::log::event_handler(d),
+		page::AppPage::Notifications => page::notifications::event_handler(d),
+		page::AppPage::Settings => page::settings::event_handler(d),
+		page::AppPage::Startup => {
+			// If in startup, change to home
+			d.app_page = page::AppPage::Home;
+			d.change_flags.app_page = true;
+		},
+	}
+	// Check if ready to sleep:
+	//	- Unhandled DeviceInfo changes
+	//	- Driver events that need processing
+	// 	- MCU events that need processing
 	let app_busy = get_unhandled_flags(&d.change_flags);
 	let drivers_busy = 
 		if let drivers::DriversState::Idle = drivers::get_busy(){ false } else { true };

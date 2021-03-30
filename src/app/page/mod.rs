@@ -57,13 +57,16 @@ pub fn task_handler(d: &mut crate::app::info::DeviceInfo) {
 			AppPage::Settings => settings::print_page(),
 			AppPage::Startup => startup::print_page(),
 		}
+
+		return;
 	}
+
 	match d.app_page {
 		AppPage::Home => home::task_handler(),
 		AppPage::Notifications => notifications::task_handler(),
 		AppPage::Log => log::task_handler(),
 		AppPage::Settings => settings::task_handler(),
-		AppPage::Startup => startup::task_handler(),
+		_ => (),
 	}
 
 }
