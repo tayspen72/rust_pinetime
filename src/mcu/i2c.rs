@@ -58,7 +58,8 @@ pub fn init(i2c: nrf52832_pac::TWI1){
 
 pub fn pop_byte() -> u8 {
 	unsafe {
-		let byte: u8  = RX_BUFFER[HEAD];
+		let buf = core::ptr::read_volatile(&mut RX_BUFFER);
+		let byte: u8  = buf[HEAD];
 		HEAD = HEAD + 1;
 		if HEAD >= RX_BUFFER_LENGTH {
 			HEAD = 0; 
@@ -98,11 +99,15 @@ pub fn read_byte(address: u8, send_stop: bool) -> Option<I2cError> {
 			
 			// Push byte into rx buffer
 			unsafe {
-				RX_BUFFER[TAIL] = i2c.rxd.read().rxd().bits();
-				TAIL = TAIL + 1;
-				if TAIL >= RX_BUFFER.len() {
-					TAIL = 0; 
+				let mut buf = core::ptr::read_volatile(&mut RX_BUFFER);
+				let mut tail = core::ptr::read_volatile(&mut TAIL);
+				buf[tail] = i2c.rxd.read().rxd().bits();
+				core::ptr::write_volatile(&mut RX_BUFFER, buf);
+				tail = tail + 1;
+				if tail >= RX_BUFFER.len() {
+					tail = 0; 
 				}
+				core::ptr::write_volatile(&mut TAIL, tail);
 			}
 
 			// Cleanup when finished, just to be safe
@@ -141,11 +146,15 @@ pub fn read_data(address: u8, send_stop: bool, len: usize) -> Option<I2cError> {
 				
 				// Push byte into rx buffer
 				unsafe {
-					RX_BUFFER[TAIL] = i2c.rxd.read().rxd().bits();
-					TAIL = TAIL + 1;
-					if TAIL >= RX_BUFFER_LENGTH {
-						TAIL = 0;
+					let mut buf = core::ptr::read_volatile(&mut RX_BUFFER);
+					core::ptr::write_volatile(&mut RX_BUFFER, buf);
+					let mut tail = core::ptr::read_volatile(&mut TAIL);
+					buf[tail] = i2c.rxd.read().rxd().bits();
+					tail = tail + 1;
+					if tail >= RX_BUFFER.len() {
+						tail = 0; 
 					}
+					core::ptr::write_volatile(&mut TAIL, tail);
 				}
 				
 				// Clear flag showing new data in register

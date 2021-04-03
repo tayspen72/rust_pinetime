@@ -56,7 +56,7 @@ const TOUCH_INT_PIN_CONFIG: input::PinConfig = input::PinConfig {
 	real_time_callback: true
 };
 
-const TOUCH_EVENT_READ_LEN: usize = 10;
+const TOUCH_EVENT_READ_LEN: usize = 8;
 static mut UNHANDLED_EVENTS: bool = false;
 
 //==============================================================================
@@ -117,11 +117,11 @@ fn read_event() -> TouchEvent {
 	}
 
 	let touch: TouchEvent = TouchEvent {
-		gesture: get_gesture(buf[2]),
-		event: get_event(buf[4]),
-		x: get_coordinate(buf[4], buf[5]),
-		y: get_coordinate(buf[6], buf[7]),
-		pressure: get_pressure(buf[8])
+		gesture: get_gesture(buf[1]),
+		event: get_event(buf[3]),
+		x: get_coordinate(buf[3], buf[4]),
+		y: get_coordinate(buf[5], buf[6]),
+		pressure: get_pressure(buf[7])
 	};
 
 	debug::push_log_number("gesture: ", &(touch.gesture as u32));
