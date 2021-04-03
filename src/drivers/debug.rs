@@ -28,7 +28,7 @@ struct LogLine{
 // Variables
 //==============================================================================
  const DEBUG_INITIAL_X: u16 = 0;
- const DEBUG_INITIAL_Y: u16 = 137;
+ const DEBUG_INITIAL_Y: u16 = 0;
  const DEBUG_SCALE: u16 = 2;
  const DEBUG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
  const DEBUG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
@@ -42,23 +42,23 @@ const LOG_MAX_LENGTH: usize = 24;
 const LOG_ACTUAL_LEN: usize = LOG_MAX_LENGTH - LOG_PREFIX_LENGTH;
 static LOG_LINES_ACTIVE: Mutex<Cell<usize>> = Mutex::new(Cell::new(0));
 static LOG_LINE_COUNT: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
-const LOG_LINE_ENTRIES: usize = 15;
-static LOG_LINES: Mutex<Cell<[LogLine; LOG_LINE_ENTRIES]>> = Mutex::new(Cell::new( [
+const LOG_LINE_ENTRIES: usize = 14; // 15, indexed from 0
+static LOG_LINES: Mutex<Cell<[LogLine; LOG_LINE_ENTRIES + 1]>> = Mutex::new(Cell::new( [
 	LogLine { active: true, stale: true, line: DEBUG_WELCOME },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ '-'; LOG_MAX_LENGTH ] }
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
+	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] }
 ]));
 
 //==============================================================================
@@ -158,6 +158,17 @@ fn clear_line(line_number: usize) {
 	lcd_api::fill_rectangle(0, 240, y, font::MINIMAL_CHARACTER_HEIGHT * DEBUG_SCALE, DEBUG_BACKGROUND);
 }
 
+fn get_line_length(line_number: usize) -> usize {
+	let bytes = free(|cs| LOG_LINES.borrow(cs).get()[line_number].line);
+	for i in 0..bytes.len() {
+		if bytes[i] == 0 as char {
+			return i + 1;
+		}
+	}
+
+	bytes.len()
+}
+
 fn get_num_len(mut num: u32) -> usize {
 	let mut len: usize = 1;
 	num /= 10;
@@ -174,6 +185,7 @@ fn pop_log() {
 	let num_entries = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
 	free(|cs| {
 		let mut log_lines = LOG_LINES.borrow(cs).get();
+		// Start at 1 to always show the header on row 0
 		for i in 1..num_entries {
 			log_lines[i].active = true;
 			log_lines[i].stale = true;
@@ -187,25 +199,13 @@ fn pop_log() {
 	free(|cs| LOG_LINES_ACTIVE.borrow(cs).set(LOG_LINES_ACTIVE.borrow(cs).get() - 1));
 }
 
-fn write_character(c: char, x: u16, y: u16) {
-	font::write_minimal_character(c, x, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
-}
-
 fn write_line(line_number: usize) {
 	let bytes = free(|cs| LOG_LINES.borrow(cs).get()[line_number].line);
-	let len = bytes.len();
 
-	let mut x = DEBUG_INITIAL_X;
 	let y = DEBUG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT * DEBUG_SCALE);
+	let len = get_line_length(line_number);
 
-	for i in 0..len {
-		if bytes[i] == 0 as char{
-			break;
-		}
-		
-		write_character(bytes[i] as char, x, y);
-		x += font::MINIMAL_CHARACTER_WIDTH * DEBUG_SCALE;
-	}
+	font::write_minimal_line(&bytes[0..len], DEBUG_INITIAL_X, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
 
 	// Update the stale line flag showing it has been displayed
 	free(|cs| {
