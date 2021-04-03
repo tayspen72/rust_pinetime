@@ -50,8 +50,8 @@ pub enum Color { // 5-6-5		R,  G,  B
 //==============================================================================
 pub fn init() {
 	lcd::init();
-
-	lcd::set_backlight(BacklightBrightness::Brightness0 as u8);
+	fill_background(Color::Black);
+	lcd::set_backlight(BacklightBrightness::Brightness7 as u8);
 }
 
 pub fn get_busy() -> bool {
