@@ -14,7 +14,6 @@ use app::page;
 // Enums, Structs, and Types
 //==============================================================================
 pub struct DeviceInfoChangeFlags{
-	pub app_page: bool,
 	pub battery_voltage: bool,
 	pub button_press: bool,
 	pub charger_state: bool,
@@ -48,7 +47,6 @@ static mut DEVICE_INFO: bool = false;
 
 const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
 	change_flags: DeviceInfoChangeFlags {
-		app_page: true,
 		battery_voltage: false,
 		button_press: false,
 		charger_state: false,

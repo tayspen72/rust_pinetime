@@ -22,18 +22,7 @@ use crate::app::info;
 // Public Functions
 //==============================================================================
 #[allow(dead_code)]
-pub fn event_handler(d: &mut info::DeviceInfo){
-	if d.change_flags.touch_event {
-		();
-	}
-
-	if d.change_flags.button_press {
-		();
-	}
-}
-
-#[allow(dead_code)]
-pub fn print_page() {
+pub fn start_page() {
 
 }
 
@@ -51,6 +40,12 @@ pub fn print_page() {
 // Task Handler
 //==============================================================================
 #[allow(dead_code)]
-pub fn task_handler() {
+pub fn task_handler(d: &mut info::DeviceInfo) {
+	if d.change_flags.touch_event {
+		();
+	}
 
+	if d.change_flags.button_press {
+		();
+	}
 }

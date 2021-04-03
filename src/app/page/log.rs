@@ -6,7 +6,8 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use crate::app::info;
+use crate::app::{info, page};
+use crate::drivers::touch::Gesture;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -22,18 +23,7 @@ use crate::app::info;
 // Public Functions
 //==============================================================================
 #[allow(dead_code)]
-pub fn event_handler(d: &mut info::DeviceInfo){
-	if d.change_flags.touch_event {
-		();
-	}
-
-	if d.change_flags.button_press {
-		();
-	}
-}
-
-#[allow(dead_code)]
-pub fn print_page() {
+pub fn start_page() {
 
 }
 
@@ -51,6 +41,20 @@ pub fn print_page() {
 // Task Handler
 //==============================================================================
 #[allow(dead_code)]
-pub fn task_handler() {
+pub fn task_handler(d: &mut info::DeviceInfo) {
+	if d.change_flags.touch_event {
+		if let Gesture::SlideDown = d.touch.gesture {
+			d.app_page = page::AppPage::Home;
+			page::change_page(d);
+			return;
+		}
+	}
 
+	if d.change_flags.button_press {
+		if !d.flags.button_pressed {
+			d.app_page = page::AppPage::Home;
+			page::change_page(d);
+			return;
+		}
+	}
 }

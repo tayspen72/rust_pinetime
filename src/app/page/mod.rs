@@ -12,6 +12,9 @@ pub mod notifications;
 pub mod settings;
 pub mod startup;
 
+use crate::drivers::lcd::lcd_api;
+use super::info;
+
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
@@ -21,7 +24,7 @@ pub enum AppPage {
 	Notifications,
 	Log,
 	Settings,
-	Startup
+	Startup,
 }
 
 //==============================================================================
@@ -32,7 +35,22 @@ pub enum AppPage {
 //==============================================================================
 // Public Functions
 //==============================================================================
+pub fn change_page(d: &mut info::DeviceInfo) {
+	// Clear what was there
+	lcd_api::set_backlight(lcd_api::BacklightBrightness::Brightness0);
+	lcd_api::fill_background(lcd_api::Color::Black);
 
+	match d.app_page {
+		AppPage::Home => home::start_page(),
+		AppPage::Notifications => notifications::start_page(),
+		AppPage::Log => log::start_page(),
+		AppPage::Settings => settings::start_page(d),
+		_ => (),
+	}
+
+	// Restore brightness to show new page
+	lcd_api::set_backlight(lcd_api::BacklightBrightness::Brightness4);
+}
 
 //==============================================================================
 // Private Functions
@@ -47,26 +65,3 @@ pub enum AppPage {
 //==============================================================================
 // Task Handler
 //==============================================================================
-#[allow(dead_code)]
-pub fn task_handler(d: &mut crate::app::info::DeviceInfo) {
-	if d.change_flags.app_page{
-		match d.app_page {
-			AppPage::Home => home::print_page(),
-			AppPage::Notifications => notifications::print_page(),
-			AppPage::Log => log::print_page(),
-			AppPage::Settings => settings::print_page(),
-			AppPage::Startup => startup::print_page(),
-		}
-
-		return;
-	}
-
-	match d.app_page {
-		AppPage::Home => home::task_handler(),
-		AppPage::Notifications => notifications::task_handler(),
-		AppPage::Log => log::task_handler(),
-		AppPage::Settings => settings::task_handler(),
-		_ => (),
-	}
-
-}

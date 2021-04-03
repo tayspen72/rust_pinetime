@@ -36,9 +36,14 @@ pub enum DisplayState{
 //==============================================================================
 // Private Functions
 //==============================================================================
+fn clear_flags(d: &mut info::DeviceInfo) {
+	if d.change_flags.display_state {
+		d.change_flags.display_state = false;
+	}
+}
+
 fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
-	if flags.app_page ||
-		flags.battery_voltage ||
+	if flags.battery_voltage ||
 		flags.button_press ||
 		flags.charger_state ||
 		flags.display_state ||
@@ -51,6 +56,25 @@ fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
 	}
 }
 
+fn get_busy(d: &mut info::DeviceInfo) -> bool {
+	// Check if ready to sleep:
+	//	- Unhandled DeviceInfo changes
+	//	- Driver events that need processing
+	// 	- MCU events that need processing
+	if get_unhandled_flags(&d.change_flags) {
+		return true;
+	}
+
+	if let drivers::DriversState::Idle = drivers::get_busy() { 
+		return true;
+	}
+
+	if let mcu::McuState::Idle = mcu::get_busy() {
+		return true;
+	}
+	false
+}
+
 //==============================================================================
 // Interrupt Handler
 //==============================================================================
@@ -60,31 +84,32 @@ fn get_unhandled_flags(flags: &info::DeviceInfoChangeFlags) -> bool {
 // Task Handler
 //==============================================================================
 pub fn task_handler(d: &mut info::DeviceInfo) {
-	// Handle any pending tasks on the current page
-// Handle all input events and route them to pages as needed
+	// First, clear all previously set flags
+	clear_flags(d);
+
+	// Call the task handler for the current page
 	match d.app_page {
-		page::AppPage::Home => page::home::event_handler(d),
-		page::AppPage::Log => page::log::event_handler(d),
-		page::AppPage::Notifications => page::notifications::event_handler(d),
-		page::AppPage::Settings => page::settings::event_handler(d),
+		page::AppPage::Home => page::home::task_handler(d),
+		page::AppPage::Log => page::log::task_handler(d),
+		page::AppPage::Notifications => page::notifications::task_handler(d),
+		page::AppPage::Settings => page::settings::task_handler(d),
 		page::AppPage::Startup => {
-			// If in startup, change to home
-			d.app_page = page::AppPage::Home;
-			d.change_flags.app_page = true;
+			page::startup::print_page();
+			d.app_page = page::AppPage::Log;
+			page::change_page(d);
 		},
 	}
-	// Check if ready to sleep:
-	//	- Unhandled DeviceInfo changes
-	//	- Driver events that need processing
-	// 	- MCU events that need processing
-	let app_busy = get_unhandled_flags(&d.change_flags);
-	let drivers_busy = 
-		if let drivers::DriversState::Idle = drivers::get_busy(){ false } else { true };
-	let mcu_busy = 
-		if let mcu::McuState::Idle = mcu::get_busy() { false } else { true };
+
+	// if d.change_flags.display_state {
+	// 	match d.display_state {
+	// 		DisplayState::Dim => drivers::lcd::lcd_api::set_backlight(drivers::lcd::lcd_api::BacklightBrightness::Brightness1),
+	// 		DisplayState::Off => drivers::lcd::lcd_api::set_backlight(drivers::lcd::lcd_api::BacklightBrightness::Brightness0),
+	// 		DisplayState::On => drivers::lcd::lcd_api::set_backlight(drivers::lcd::lcd_api::BacklightBrightness::Brightness7),
+	// 	}
+	// }
 
 	// If nothing is busy, sleep
-	if !app_busy && !drivers_busy && !mcu_busy {
+	if !get_busy(d) {
 		wfi();
 	}
 }

@@ -25,6 +25,7 @@ pub struct Time {
 //==============================================================================
 // Variables
 //==============================================================================
+static mut DIGITS_ON_DISPLAY: [u8; 6] = [10; 6];	// Init at 10 to force write the first time
 static TIME: Mutex<Cell<Time>> = Mutex::new(Cell::new( Time {
 	hours: 0,
 	minutes: 0,
@@ -33,6 +34,7 @@ static TIME: Mutex<Cell<Time>> = Mutex::new(Cell::new( Time {
 
 const DIGITS_X: [u16; 4] = [ 69, 109, 159, 199];
 const DIGITS_Y: [u16; 4] = [ 0; 4 ];
+
 
 //==============================================================================
 // Public Functions
@@ -58,12 +60,9 @@ pub fn init() {
 
 		TIME.borrow(cs).set(time);
 	});
-	write_time();
 }
 
-pub fn write_time() {
-	static mut LAST_DIGITS: [u8; 6] = [10; 6];	// Init at 10 to force write the first time
-	
+pub fn update_time() {
 	let time = free(|cs| TIME.borrow(cs).get());
 	let digits: [u8; 4] = [
 		(time.hours/10)%10,
@@ -74,10 +73,27 @@ pub fn write_time() {
 
 	unsafe {
 		for i in 0..4 {
-			if digits[i] != LAST_DIGITS[i] {
-				LAST_DIGITS[i] = digits[i];
+			if digits[i] != DIGITS_ON_DISPLAY[i] {
+				DIGITS_ON_DISPLAY[i] = digits[i];
 				lcd::font::write_time_character(digits[i], DIGITS_X[i], DIGITS_Y[i], lcd::lcd_api::Color::Blue, lcd::lcd_api::Color::Black);
 			}
+		}
+	}
+}
+
+pub fn write_time() {
+	let time = free(|cs| TIME.borrow(cs).get());
+	let digits: [u8; 4] = [
+		(time.hours/10)%10,
+		time.hours%10,
+		(time.minutes/10)%10,
+		time.minutes%10,
+	];
+
+	unsafe {
+		for i in 0..4 {
+			DIGITS_ON_DISPLAY[i] = digits[i];
+			lcd::font::write_time_character(digits[i], DIGITS_X[i], DIGITS_Y[i], lcd::lcd_api::Color::Blue, lcd::lcd_api::Color::Black);
 		}
 	}
 }
