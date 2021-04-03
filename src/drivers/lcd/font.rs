@@ -529,6 +529,17 @@ fn get_minimal_character(c: char) -> &'static MinimalCharacter {
 }
 
 #[allow(dead_code)]
+pub fn write_minimal_line(line: &[char], x_start: u16, y_start: u16, fg: lcd_api::Color, bg: lcd_api::Color, scale: u16) {
+	let char_width = x_start + (MINIMAL_CHARACTER_WIDTH * scale);
+	let max_chars = 240 / char_width as usize;
+	let len = if line.len() > max_chars { max_chars } else { line.len() };
+
+	for i in 0..len {
+		write_minimal_character(line[i], x_start + (i as u16 * char_width), y_start, fg, bg, scale);
+	}
+}
+
+#[allow(dead_code)]
 pub fn write_minimal_character(c: char, x: u16, y: u16, fg: lcd_api::Color, bg: lcd_api::Color, scale: u16) {
 	let char_width = MINIMAL_CHARACTER_WIDTH * scale;
 	let char_height = MINIMAL_CHARACTER_HEIGHT * scale;
