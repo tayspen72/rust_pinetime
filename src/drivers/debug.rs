@@ -9,8 +9,6 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use core::cell::Cell;
-use cortex_m::interrupt::{free, Mutex};
 use crate::app::{info, page};
 use super::lcd::{lcd_api, font};
 
@@ -21,7 +19,7 @@ use super::lcd::{lcd_api, font};
 struct LogLine{
 	active: bool,
 	stale: bool,
-	line: [char; 24]
+	line: [u8; 24]
 }
 
 //==============================================================================
@@ -32,122 +30,97 @@ struct LogLine{
  const DEBUG_SCALE: u16 = 2;
  const DEBUG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
  const DEBUG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
- const DEBUG_WELCOME: [char; LOG_MAX_LENGTH] = [
-	'*', '*', ' ', 'L', 'o', 'g', ' ', 'O', 'u', 't', 'p', 'u', 
-	't', ' ', 'W', 'i', 'n', 'd', 'o', 'w', ' ', ' ', '*', '*'
- ];
+ const DEBUG_WELCOME: &'static str = "** Log Output Window **";
 
 const LOG_PREFIX_LENGTH: usize = 3;
 const LOG_MAX_LENGTH: usize = 24;
 const LOG_ACTUAL_LEN: usize = LOG_MAX_LENGTH - LOG_PREFIX_LENGTH;
-static LOG_LINES_ACTIVE: Mutex<Cell<usize>> = Mutex::new(Cell::new(0));
-static LOG_LINE_COUNT: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
-const LOG_LINE_ENTRIES: usize = 14; // 15, indexed from 0
-static LOG_LINES: Mutex<Cell<[LogLine; LOG_LINE_ENTRIES + 1]>> = Mutex::new(Cell::new( [
-	LogLine { active: true, stale: true, line: DEBUG_WELCOME },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] },
-	LogLine { active: false, stale: true, line: [ ' '; LOG_MAX_LENGTH ] }
-]));
+const LOG_LINE_ENTRIES: usize = 15;
+static mut LOG_LINES_ACTIVE: usize = 0;
+static mut LOG_LINES:[LogLine; LOG_LINE_ENTRIES] = [
+	LogLine { active: false, stale: true, line: [ 0x00; LOG_MAX_LENGTH ] };
+	LOG_LINE_ENTRIES
+];
 
 //==============================================================================
 // Public Functions
 //==============================================================================
 pub fn init() {
+	// Push the welcome message
+	push_log(DEBUG_WELCOME);
+}
 
+pub fn make_stale() {
+	unsafe {
+		for i in 0..LOG_LINES_ACTIVE {
+			LOG_LINES[i].stale = true;
+		}
+	}
 }
 
 #[allow(dead_code)]
 pub fn push_log(string: &'static str) {
-	if free(|cs| LOG_LINES_ACTIVE.borrow(cs).get()) == LOG_LINE_ENTRIES {
-		pop_log();
-	}
+	unsafe { 
+		if LOG_LINES_ACTIVE == LOG_LINE_ENTRIES {
+			pop_log();
+		}
+			
+		let index = LOG_LINES_ACTIVE;
+		LOG_LINES_ACTIVE = LOG_LINES_ACTIVE + 1;
+		
+		let len = if string.len() < LOG_ACTUAL_LEN { string.len()} else { LOG_ACTUAL_LEN };
+		let string = string.as_bytes();
 
-	free(|cs| LOG_LINES_ACTIVE.borrow(cs).set(LOG_LINES_ACTIVE.borrow(cs).get() + 1));
-	
-	let index = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
-	let len = if string.len() < LOG_ACTUAL_LEN { string.len()} else { LOG_ACTUAL_LEN };
-	let string = string.as_bytes();
-	let count = free(|cs| LOG_LINE_COUNT.borrow(cs).get());
-	let count = if count + 1 == 100 { 0 } else { count + 1 };
-	free(|cs| LOG_LINE_COUNT.borrow(cs).set(count));
-
-	free(|cs| {
-		let mut log_lines = LOG_LINES.borrow(cs).get();
-		log_lines[index].active = true;
-		log_lines[index].stale = true;
-		// Print debug line count
-		log_lines[index].line[0] = (0x30 + ((count / 10) % 10)) as char;
-		log_lines[index].line[1] = (0x30 + (count % 10)) as char;
-		log_lines[index].line[2] = ':';
-
+		LOG_LINES[index].active = true;
+		LOG_LINES[index].stale = true; 
+		
 		// Copy bytes from string into the log lines object
 		for i in 0..len {
-			log_lines[index].line[i+3] = string[i] as char;
+			LOG_LINES[index].line[i] = string[i];
 		}
-		if len < 21 {
-			log_lines[index].line[len+3] = 0 as char;
+		if len < LOG_ACTUAL_LEN {
+			LOG_LINES[index].line[len] = 0;
 		}
-
-		LOG_LINES.borrow(cs).set(log_lines);
-	});
+	}
 }
 
 #[allow(dead_code)]
 pub fn push_log_number(string: &'static str, num: &u32) {
-	if free(|cs| LOG_LINES_ACTIVE.borrow(cs).get()) == LOG_LINE_ENTRIES {
-		pop_log();
-	}
+	unsafe { 
+		if LOG_LINES_ACTIVE == LOG_LINE_ENTRIES {
+			pop_log();
+		}
+		
+		let index = LOG_LINES_ACTIVE;
+		LOG_LINES_ACTIVE = LOG_LINES_ACTIVE + 1;
+		
+		let string_len = if string.len() < LOG_ACTUAL_LEN { string.len()} else { LOG_ACTUAL_LEN };
+		let string = string.as_bytes();
+		let num_len = get_num_len(*num);
 
-	free(|cs| LOG_LINES_ACTIVE.borrow(cs).set(LOG_LINES_ACTIVE.borrow(cs).get() + 1));
-	
-	let index = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
-	let string_len = if string.len() < LOG_ACTUAL_LEN { string.len()} else { LOG_ACTUAL_LEN };
-	let string = string.as_bytes();
-	let count = free(|cs| LOG_LINE_COUNT.borrow(cs).get());
-	let count = if count + 1 == 100 { 0 } else { count + 1 };
-	let num_len = get_num_len(*num);
-
-	free(|cs| LOG_LINE_COUNT.borrow(cs).set(count));
-
-	free(|cs| {
-		let mut log_lines = LOG_LINES.borrow(cs).get();
-		log_lines[index].active = true;
-		log_lines[index].stale = true;
-		// Print debug line count
-		log_lines[index].line[0] = (0x30 + ((count / 10) % 10)) as char;
-		log_lines[index].line[1] = (0x30 + (count % 10)) as char;
-		log_lines[index].line[2] = ':';
+		LOG_LINES[index].active = true;
+		LOG_LINES[index].stale = true; 
 
 		// Copy bytes from string into the log lines object
 		for i in 0..string_len {
-			log_lines[index].line[i+3] = string[i] as char;
+			LOG_LINES[index].line[i] = string[i];
 		}
+		// Copy in number as ascii
 		let mut div: u32 = 1;
-		for i in 0..num_len {
-			let c = 3 + string_len + num_len - 1 - i;
-			log_lines[index].line[c] = 
-				((0x30 + ((num / div) % 10)) as u8) as char;
-			div *= 10;
+		for i in string_len..(string_len+num_len) {
+			if i == LOG_ACTUAL_LEN {
+				break;
+			}
+			else {
+				LOG_LINES[index].line[i] = (0x30 + ((num / div) % 10)) as u8;
+				div *= 10;
+			}
 		}
 
 		if string_len + num_len <= LOG_ACTUAL_LEN {
-			log_lines[index].line[string_len+num_len+3] = 0 as char;
+			LOG_LINES[index].line[string_len+num_len+3] = 0;
 		}
-
-		LOG_LINES.borrow(cs).set(log_lines);
-	});
+	}
 }
 
 //==============================================================================
@@ -159,14 +132,14 @@ fn clear_line(line_number: usize) {
 }
 
 fn get_line_length(line_number: usize) -> usize {
-	let bytes = free(|cs| LOG_LINES.borrow(cs).get()[line_number].line);
-	for i in 0..bytes.len() {
-		if bytes[i] == 0 as char {
+	let line = unsafe { LOG_LINES[line_number].line }; 
+	for i in 0..line.len() {
+		if line[i] == 0 {
 			return i + 1;
 		}
 	}
 
-	bytes.len()
+	line.len()
 }
 
 fn get_num_len(mut num: u32) -> usize {
@@ -181,38 +154,32 @@ fn get_num_len(mut num: u32) -> usize {
 }
 
 fn pop_log() {
-	// Shift all entries up one - leaving the bottom entry available
-	let num_entries = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
-	free(|cs| {
-		let mut log_lines = LOG_LINES.borrow(cs).get();
-		// Start at 1 to always show the header on row 0
-		for i in 1..num_entries {
-			log_lines[i].active = true;
-			log_lines[i].stale = true;
-			log_lines[i].line = log_lines[i+1].line;
-		}
-		log_lines[num_entries].active = false;
-		LOG_LINES.borrow(cs).set(log_lines);
-	});
+	unsafe {
+		// Show that a line has just been popped
+		LOG_LINES_ACTIVE = LOG_LINES_ACTIVE - 1;
 
-	// Show that a line has just been popped
-	free(|cs| LOG_LINES_ACTIVE.borrow(cs).set(LOG_LINES_ACTIVE.borrow(cs).get() - 1));
+		// Shift all entries up one - leaving the bottom entry available
+		// Start at 1 to always show the header on row 0
+		for i in 1..(LOG_LINES_ACTIVE) {
+			LOG_LINES[i].active = true;
+			LOG_LINES[i].stale = true;
+			LOG_LINES[i].line = LOG_LINES[i+1].line;
+		}
+		LOG_LINES[LOG_LINES_ACTIVE].active = false;
+
+	}
 }
 
 fn write_line(line_number: usize) {
-	let bytes = free(|cs| LOG_LINES.borrow(cs).get()[line_number].line);
-
 	let y = DEBUG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT * DEBUG_SCALE);
 	let len = get_line_length(line_number);
 
-	font::write_minimal_line(&bytes[0..len], DEBUG_INITIAL_X, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
+	unsafe { 
+		font::write_minimal_line(&LOG_LINES[line_number].line[0..len], DEBUG_INITIAL_X, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
 
-	// Update the stale line flag showing it has been displayed
-	free(|cs| {
-		let mut log_lines = LOG_LINES.borrow(cs).get();
-		log_lines[line_number].stale = false;
-		LOG_LINES.borrow(cs).set(log_lines);
-	});
+		// Update the stale line flag showing it has been displayed
+		LOG_LINES[line_number].stale = false;
+	}
 }
 
 //==============================================================================
@@ -225,17 +192,17 @@ fn write_line(line_number: usize) {
 //==============================================================================
 pub fn task_handler(d: &info::DeviceInfo) {
 	if let page::AppPage::Log = d.app_page {
-		let len = free(|cs| LOG_LINES_ACTIVE.borrow(cs).get());
+		unsafe {
+			for i in 0..LOG_LINES_ACTIVE {
+				// If log lines are current, do nothing
+				if !LOG_LINES[i].active {
+					return;
+				}
 
-		for i in 0..=len {
-			// If log lines are current, do nothing
-			if !free(|cs| LOG_LINES.borrow(cs).get()[i].active) {
-				return;
-			}
-
-			if free(|cs| LOG_LINES.borrow(cs).get()[i].stale) {
-				clear_line(i);
-				write_line(i);
+				if LOG_LINES[i].stale {
+					clear_line(i);
+					write_line(i);
+				}
 			}
 		}
 	}
