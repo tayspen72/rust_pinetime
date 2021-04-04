@@ -44,10 +44,6 @@ pub fn print_page(){
 	lcd_api::fill_rectangle(81, 78, 161, 79, lcd_api::Color::Magenta);
 	lcd_api::fill_rectangle(161, 79, 161, 79, lcd_api::Color::White);
 	timer::delay(2000);
-
-	lcd_api::set_backlight(lcd_api::BacklightBrightness::Brightness0);
-	lcd_api::fill_background(lcd_api::Color::Black);
-	lcd_api::set_backlight(lcd_api::BacklightBrightness::Brightness4);
 }
 
 //==============================================================================
