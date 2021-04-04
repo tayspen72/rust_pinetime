@@ -63,7 +63,7 @@ fn write_battery_level(level: u8, voltage: u16, charging: bool) {
 		};
 		let x = BATTERY_ICON_X + 8 + (d as u16 * 6);
 		
-		font::write_minimal_character((0x30 + v) as char, x, BATTERY_ICON_Y + 16, color, BATTERY_FILL_COLOR, 1)
+		font::write_minimal_character(0x30 + v, x, BATTERY_ICON_Y + 16, color, BATTERY_FILL_COLOR, 1)
 	}
 
 	// Print (or remove) the charger status icon
