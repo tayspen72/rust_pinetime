@@ -88,11 +88,11 @@ pub fn set_window(x: u16, width: u16, y: u16, height: u16) {
 
 	// Define the window column size
 	lcd::write_command(st7789::COMMAND::COLUMN_ADDRESS);
-	lcd::write_data( &[ x[1], x[0], x_end[1], x_end[0] ]);
+	lcd::write_data( &mut [ x[1], x[0], x_end[1], x_end[0] ]);
 
 	// Define the window row size
 	lcd::write_command(st7789::COMMAND::ROW_ADDRESS);
-	lcd::write_data( &[ y[1], y[0], y_end[1], y_end[0] ]);
+	lcd::write_data( &mut [ y[1], y[0], y_end[1], y_end[0] ]);
 }
 
 #[allow(dead_code)]

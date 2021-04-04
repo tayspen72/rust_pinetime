@@ -8,6 +8,7 @@
 // Crates and Mods
 //==============================================================================
 use crate::config;
+use crate::drivers::log;
 use crate::mcu::{gpio, spi, timer};
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
 use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
@@ -22,7 +23,7 @@ use super::st7789;
 //==============================================================================
 // Variables
 //==============================================================================
-const DMA_ENABLED: bool = false;
+
 
 //==============================================================================
 // Public Functions
@@ -62,7 +63,9 @@ pub fn write_command(command: st7789::COMMAND) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinLow);
 
-	spi::write_data(&[command as u8]);
+	if let Err(_e) = spi::write(&[command as u8]) {
+		log::push_log("Spi command failed");
+	}
 
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
@@ -72,7 +75,9 @@ pub fn write_data(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	spi::write_data(data);
+	if let Err(_e) = spi::write(data) {
+		log::push_log("Spi write data failed");
+	}
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }
@@ -81,7 +86,9 @@ pub fn write_block(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	spi::write_data(data);
+	if let Err(_e) = spi::write(data) {
+		log::push_log("Spi write block failed");
+	}
 	
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }
@@ -90,7 +97,9 @@ pub fn write_block_solid(color: u16, len: u32) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	spi::write_data_solid(color, len);
+	if let Err(_e) = spi::write_u16(color, len) {
+		log::push_log("Spi write u16 failed");
+	}
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }
@@ -120,54 +129,54 @@ fn configure() {
 	// Write memory data format: 
 	//  RGB, left to right, top to bottom, logical direction of memory pointer updates
 	write_command(st7789::COMMAND::MEMORY_DATA_ACCESS_CONTROL);
-	write_data(&[ 0x08 ]);
+	write_data(&mut [ 0x08 ]);
 
 	// Define pixel interfacing format:
 	//  5-6-5 for 65k color options
 	write_command(st7789::COMMAND::INTERFACE_PIXEL_FORMAT);
-	write_data(&[ 0x55 ]);
+	write_data(&mut [ 0x55 ]);
 	timer::delay(10);
 
 	write_command(st7789::COMMAND::PORCH_SETTING);
-	write_data(&[ 0x0c, 0x0c, 0x00, 0x33, 0x33 ]);
+	write_data(&mut [ 0x0c, 0x0c, 0x00, 0x33, 0x33 ]);
 
 	write_command(st7789::COMMAND::GATE_CONTROL);
-	write_data(&[ 0x35 ]);
+	write_data(&mut [ 0x35 ]);
 
 	write_command(st7789::COMMAND::GATE_ON_TIMING_ADJUSTMENT);
-	write_data(&[ 0x28 ]);
+	write_data(&mut [ 0x28 ]);
 
 	write_command(st7789::COMMAND::LCM_CONTROL);
-	write_data(&[ 0x0C ]);
+	write_data(&mut [ 0x0C ]);
 
 	write_command(st7789::COMMAND::VDV_VRH_CMD_ENABLE);
-	write_data(&[ 0x01, 0xFF ]);
+	write_data(&mut [ 0x01, 0xFF ]);
 
 	write_command(st7789::COMMAND::VRH_SET);
-	write_data(&[ 0x01 ]);
+	write_data(&mut [ 0x01 ]);
 
 	write_command(st7789::COMMAND::VDV_SET);
-	write_data(&[ 0x20 ]);
+	write_data(&mut [ 0x20 ]);
 
 	write_command(st7789::COMMAND::FRAME_RATE_CONTROL_2);
-	write_data(&[ 0x0F ]);
+	write_data(&mut [ 0x0F ]);
 
 	write_command(st7789::COMMAND::POWER_CONTROL_1);
-	write_data(&[ 0xA4, 0xA1 ]);
+	write_data(&mut [ 0xA4, 0xA1 ]);
 
 	write_command(st7789::COMMAND::POSITIVE_VOLTAGE_GAMMA_CONTROL);
-	write_data(&[ 0xd0, 0x00, 0x02, 0x07, 0x0a, 0x28, 0x32, 0x44, 0x42, 0x06, 0x0e, 0x12, 0x14, 0x17 ]);
+	write_data(&mut [ 0xd0, 0x00, 0x02, 0x07, 0x0a, 0x28, 0x32, 0x44, 0x42, 0x06, 0x0e, 0x12, 0x14, 0x17 ]);
 	
 	write_command(st7789::COMMAND::NEGATIVE_VOLTAGE_GAMMA_CONTROL);
-	write_data(&[ 0xd0, 0x00, 0x02, 0x07, 0x0a, 0x28, 0x31, 0x54, 0x47, 0x0e, 0x1c, 0x17, 0x1b, 0x1e ]); 	
+	write_data(&mut [ 0xd0, 0x00, 0x02, 0x07, 0x0a, 0x28, 0x31, 0x54, 0x47, 0x0e, 0x1c, 0x17, 0x1b, 0x1e ]); 	
 	
 	write_command(st7789::COMMAND::DISPLAY_INVERSION_ON);
 	
 	write_command(st7789::COMMAND::DISPLAY_BRIGHTNESS);
-	write_data(&[ 0x7F ]);	//initial 25% brightness
+	write_data(&mut [ 0x7F ]);	//initial 25% brightness
 
 	write_command(st7789::COMMAND::GAMMA);
-	write_data(&[ 0x04 ]);
+	write_data(&mut [ 0x04 ]);
 
 	// Explicitly end this bulk write
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
