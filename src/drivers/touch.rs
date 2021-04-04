@@ -56,7 +56,8 @@ const TOUCH_INT_PIN_CONFIG: input::PinConfig = input::PinConfig {
 	real_time_callback: true
 };
 
-const TOUCH_EVENT_READ_LEN: usize = 8;
+const TOUCH_EVENT_READ_LEN: usize = 63;
+static mut LAST_EVENT_BUFFER: [u8; TOUCH_EVENT_READ_LEN] = [0; TOUCH_EVENT_READ_LEN]; 
 static mut UNHANDLED_EVENTS: bool = false;
 
 //==============================================================================
@@ -111,35 +112,36 @@ pub fn get_pressure(raw: u8) -> u8 {
 }
 
 fn read_event() -> TouchEvent {
-	let mut buf: [u8; TOUCH_EVENT_READ_LEN] = [0; TOUCH_EVENT_READ_LEN];
-	for i in 0..buf.len() {
-		buf[i] = i2c::pop_byte();
+	unsafe {
+		let touch: TouchEvent = TouchEvent {
+			gesture: get_gesture(LAST_EVENT_BUFFER[1]),
+			event: get_event(LAST_EVENT_BUFFER[3]),
+			x: get_coordinate(LAST_EVENT_BUFFER[3], LAST_EVENT_BUFFER[4]),
+			y: get_coordinate(LAST_EVENT_BUFFER[5], LAST_EVENT_BUFFER[6]),
+			pressure: get_pressure(LAST_EVENT_BUFFER[7])
+		};
+
+		debug::push_log_number("gesture: ", &(touch.gesture as u32));
+		debug::push_log_number("event: ", &(touch.event as u32));
+		debug::push_log_number("x: ", &(touch.x as u32));
+		debug::push_log_number("y: ", &(touch.y as u32));
+		debug::push_log_number("pressure: ", &(touch.pressure as u32));
+
+		touch
 	}
-
-	let touch: TouchEvent = TouchEvent {
-		gesture: get_gesture(buf[1]),
-		event: get_event(buf[3]),
-		x: get_coordinate(buf[3], buf[4]),
-		y: get_coordinate(buf[5], buf[6]),
-		pressure: get_pressure(buf[7])
-	};
-
-	debug::push_log_number("gesture: ", &(touch.gesture as u32));
-	debug::push_log_number("event: ", &(touch.event as u32));
-	debug::push_log_number("x: ", &(touch.x as u32));
-	debug::push_log_number("y: ", &(touch.y as u32));
-	debug::push_log_number("pressure: ", &(touch.pressure as u32));
-
-	touch
 }
 
 fn touch_handler() {
-	// Attempt read touch event
-	if let None = i2c::write_byte(config::TOUCH_I2C_ADDRESS, 0x00, true, false) {
-		if let None = i2c::read_data(config::TOUCH_I2C_ADDRESS, true, TOUCH_EVENT_READ_LEN) {
-			unsafe { UNHANDLED_EVENTS = true };
+	unsafe { 
+		// Attempt read touch event
+		let res = i2c::write_then_read(config::TOUCH_I2C_ADDRESS, &[0x00],  &mut LAST_EVENT_BUFFER);
+		if let Err(_e) = res {
+			debug::push_log("Failed to read touch sensor");
 		}
-	}	
+		else{
+			UNHANDLED_EVENTS = true;
+		}
+	};
 }
 
 //==============================================================================

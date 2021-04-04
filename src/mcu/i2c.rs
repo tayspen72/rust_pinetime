@@ -24,22 +24,16 @@ pub struct I2cLine {
 }
 
 pub enum I2cError {
-	OVERRUN,
-	ANACK,
-	DNACK,
 	HANDLER,
-	UNKNOWN
+	RECEIVE,
+	STOP,
+	TRANSMIT
 }
 //==============================================================================
 // Variables
 //==============================================================================
 static I2C_HANDLE: Mutex<RefCell<Option<nrf52832_pac::TWI1>>> = 
 	Mutex::new(RefCell::new(None));
-
-const RX_BUFFER_LENGTH: usize = 63;
-static mut RX_BUFFER: [u8; RX_BUFFER_LENGTH] = [0; RX_BUFFER_LENGTH];
-static mut HEAD: usize = 0;
-static mut TAIL: usize = 0;
 
 const I2C_LINE: I2cLine = I2cLine {
 	scl_pin: config::I2C_SCL_PIN,
@@ -56,185 +50,137 @@ pub fn init(i2c: nrf52832_pac::TWI1){
 	free(|cs| I2C_HANDLE.borrow(cs).replace(Some(i2c)));
 }
 
-pub fn pop_byte() -> u8 {
-	unsafe {
-		let buf = core::ptr::read_volatile(&mut RX_BUFFER);
-		let byte: u8  = buf[HEAD];
-		HEAD = HEAD + 1;
-		if HEAD >= RX_BUFFER_LENGTH {
-			HEAD = 0; 
-		}
-		byte
-	}
-}
-
 #[allow(dead_code)]
-pub fn read_byte(address: u8, send_stop: bool) -> Option<I2cError> {
-	set_address(address);
-
+pub fn read(address: u8, buffer: &mut [u8]) -> Result<(), I2cError> {
 	free(|cs| {
 		if let Some(ref mut i2c) = I2C_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			// Start Rx task
-			i2c.tasks_startrx.write(|w| unsafe { w.bits(1) } );
-			
-			// Wait for rx event or error out
-			while (i2c.events_rxdready.read().bits() == 0) && 
-				(i2c.events_error.read().bits() == 0) {}
-			
-			// If error, bail out
-			if i2c.events_error.read().bits() > 0 {
-				i2c.events_error.write(|w| unsafe { w.bits(0) });
-				i2c.tasks_stop.write(|w| unsafe { w.bits(1) } );
-				let error = get_errorsrc(i2c.errorsrc.read().bits());
-				return Some(error);
-			}
-			
-			// Send stop before reading rxd as it could initiate another rx when read
-			if send_stop {
-				i2c.tasks_stop.write(|w| unsafe { w.bits(1) } );
-			}
-			
-			// Clear out the Rx event flag
-			i2c.events_rxdready.write(|w| unsafe { w.bits(0) });
-			
-			// Push byte into rx buffer
-			unsafe {
-				let mut buf = core::ptr::read_volatile(&mut RX_BUFFER);
-				let mut tail = core::ptr::read_volatile(&mut TAIL);
-				buf[tail] = i2c.rxd.read().rxd().bits();
-				core::ptr::write_volatile(&mut RX_BUFFER, buf);
-				tail = tail + 1;
-				if tail >= RX_BUFFER.len() {
-					tail = 0; 
-				}
-				core::ptr::write_volatile(&mut TAIL, tail);
-			}
+			// Disable all shorcuts
+			i2c.shorts.write(|w| w
+				.bb_stop().disabled()
+				.bb_suspend().disabled()
+			);
 
-			// Cleanup when finished, just to be safe
-			i2c.events_error.write(|w| unsafe { w.bits(0) });
-			i2c.events_rxdready.write(|w| unsafe { w.bits(0) });
+			// Make sure the right address is being used
+			i2c.address.write(|w| unsafe { w.address().bits(address.into()) });
 			
-			None
-		}
-		else{
-			Some(I2cError::HANDLER)
-		}
-	})
-}
-
-#[allow(dead_code)]
-pub fn read_data(address: u8, send_stop: bool, len: usize) -> Option<I2cError> {
-	set_address(address);
-	
-	free(|cs| {
-		if let Some(ref mut i2c) = I2C_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			// Start the first Rx task
-			i2c.tasks_startrx.write(|w| unsafe { w.bits(1) } );
-
-			for i in 0..len {
-				// Wait for rx event or error out
-				while (i2c.events_rxdready.read().bits() == 0) && 
-					(i2c.events_error.read().bits() == 0) {}
-				
-				// If error, bail out
-				if i2c.events_error.read().bits() > 0 {
-					i2c.events_error.write(|w| unsafe { w.bits(0) });
-					i2c.tasks_stop.write(|w| unsafe { w.bits(1) } );
-					let error = get_errorsrc(i2c.errorsrc.read().bits());
-					return Some(error);
+			// Split the transaction into the bulk of the read and the last byte to be read
+			if let Some((last, data)) = buffer.split_last_mut() {
+				if !data.is_empty() {
+					i2c.shorts.write(|w| w.bb_suspend().enabled());
 				}
-				
-				// Push byte into rx buffer
-				unsafe {
-					let mut buf = core::ptr::read_volatile(&mut RX_BUFFER);
-					core::ptr::write_volatile(&mut RX_BUFFER, buf);
-					let mut tail = core::ptr::read_volatile(&mut TAIL);
-					buf[tail] = i2c.rxd.read().rxd().bits();
-					tail = tail + 1;
-					if tail >= RX_BUFFER.len() {
-						tail = 0; 
-					}
-					core::ptr::write_volatile(&mut TAIL, tail);
+				else{
+					i2c.shorts.write(|w| w.bb_stop().enabled());
 				}
-				
+
 				// Clear flag showing new data in register
 				i2c.events_rxdready.write(|w| unsafe { w.bits(0) });
 
-				// If not end, resume
-				if i < (len - 1) {
+				// Start the first Rx task
+				i2c.tasks_startrx.write(|w| unsafe { w.bits(1) } );
+
+				for byte in &mut data.into_iter() {
 					i2c.tasks_resume.write(|w| unsafe { w.bits(1) });
+					*byte = rx_byte(i2c)?;
 				}
-				else if send_stop {
-					i2c.tasks_stop.write(|w| unsafe { w.bits(1) } );
-				}
+				
+				i2c.shorts.write(|w| w.bb_stop().enabled());
+				i2c.tasks_resume.write(|w| unsafe { w.bits(1) });
+				*last = rx_byte(i2c)?;
+			}
+			else{
+				send_stop(i2c)?;
 			}
 			
-			// Cleanup when finished, just to be safe
-			i2c.events_error.write(|w| unsafe { w.bits(0) });
-			i2c.events_rxdready.write(|w| unsafe { w.bits(0) });
-			i2c.rxd.read().rxd().bits();
-
-			return None
+			Ok(())
 		}
 		else {
-			return Some(I2cError::HANDLER)
+			Err(I2cError::HANDLER)
 		}
 	})
 }
 
 #[allow(dead_code)]
-pub fn write_byte(address: u8, byte: u8, send_start_command: bool, send_stop_command: bool) -> Option<I2cError> {	
-	set_address(address);
-	
-	if send_start_command {
-		send_start();
-	}
-
+pub fn write(address: u8, data: &[u8]) -> Result<(), I2cError> {
 	free(|cs| {
 		if let Some(ref mut i2c) = I2C_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			// Preload the Txd register for sending
-			i2c.txd.write(|w| unsafe { w.txd().bits(byte) } );
-			
-			// Wait for rx event or error out
-			while (i2c.events_txdsent.read().bits() == 0) && 
-				(i2c.events_error.read().bits() == 0) {}
+			// Disable all shorcuts
+			i2c.shorts.write(|w| w
+				.bb_stop().disabled()
+				.bb_suspend().disabled()
+			);
 
-			// If error, bail out
-			if i2c.events_error.read().bits() > 0 {
-				i2c.events_error.write(|w| unsafe { w.bits(0) });
-				i2c.tasks_stop.write(|w| unsafe { w.bits(1) } );
-				let error = get_errorsrc(i2c.errorsrc.read().bits());
-				return Some(error);
+			// Make sure the right address is being used
+			i2c.address.write(|w| unsafe { w.address().bits(address.into()) });
+
+			// Start the transaction
+			i2c.tasks_starttx.write(|w| unsafe { w.bits(1) });
+
+			for byte in data.into_iter() {
+				tx_byte(i2c, *byte)?;
 			}
 			
-			if send_stop_command {
-				i2c.tasks_stop.write(|w| unsafe { w.bits(1) } );
-			}
-			
-			// Clear out the Tx event flag
-			i2c.events_txdsent.write(|w| unsafe { w.bits(0) });
-			None
+			send_stop(i2c)?;
+			Ok(())
 		}
 		else {
-			Some(I2cError::HANDLER)
+			Err(I2cError::HANDLER)
 		}
 	})
 }
 
-#[allow(dead_code)]
-pub fn write_data(address: u8, data: &[u8], send_start_command: bool, send_stop_command: bool) -> Option<I2cError> {
-	if send_start_command {
-		send_start();
-	}
-	
-	for i in 0..data.len() {
-		match write_byte(address, data[i], false, send_stop_command && (i == (data.len() - 1))) {
-			Some(e) => return Some(e),
-			None => ()
-		};
-	}
-	
-	None
+pub fn write_then_read(address: u8, tx_buffer: &[u8], rx_buffer: &mut [u8]) -> Result<(), I2cError> {
+	free(|cs| {
+		if let Some(ref mut i2c) = I2C_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			// Disable all shorcuts
+			i2c.shorts.write(|w| w
+				.bb_stop().disabled()
+				.bb_suspend().disabled()
+			);
+
+			// Make sure the right address is being used
+			i2c.address.write(|w| unsafe { w.address().bits(address.into()) });
+
+			// Start the transaction
+			i2c.tasks_starttx.write(|w| unsafe { w.bits(1) });
+
+			// Send out all tx buffer contents
+			for byte in tx_buffer {
+				tx_byte(i2c, *byte)?;
+			}
+
+			if let Some((last, data)) = rx_buffer.split_last_mut() {
+				if !data.is_empty() {
+					i2c.shorts.write(|w| w.bb_suspend().enabled());
+				}
+				else{
+					i2c.shorts.write(|w| w.bb_stop().enabled());
+				}
+
+				// Clear flag showing new data in register
+				i2c.events_rxdready.write(|w| unsafe { w.bits(0) });
+
+				// Start the first Rx task
+				i2c.tasks_startrx.write(|w| unsafe { w.bits(1) } );
+
+				for byte in &mut data.into_iter() {
+					i2c.tasks_resume.write(|w| unsafe { w.bits(1) });
+					*byte = rx_byte(i2c)?;
+				}
+				
+				i2c.shorts.write(|w| w.bb_stop().enabled());
+				i2c.tasks_resume.write(|w| unsafe { w.bits(1) });
+				*last = rx_byte(i2c)?;
+			}
+			else{
+				send_stop(i2c)?;
+			}
+
+			Ok(())
+		}
+			else {
+				Err(I2cError::HANDLER)
+			}
+		})
 }
 
 //==============================================================================
@@ -262,42 +208,66 @@ fn configure(i2c: &nrf52832_pac::TWI1) {
 	i2c.enable.write(|w| w.enable().enabled());
 }
 
-#[inline(always)]
-fn get_errorsrc(val: u32) -> I2cError {
-	match val {
-		1 => I2cError::OVERRUN,
-		2 => I2cError::ANACK,
-		4 => I2cError::DNACK,
-		_ => I2cError::UNKNOWN,
-	}
-}
-
-fn send_start() {
-	free(|cs| {
-		if let Some(ref mut i2c) = I2C_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			i2c.tasks_starttx.write(|w| unsafe { w.bits(1) } );
-		}
-	});
-}
-
-fn set_address(address: u8) {
-	static mut CURRENT_ADDRESS: u8 = 0;
-
-	if address == unsafe { CURRENT_ADDRESS } {
-		return;
-	}
-
-	free(|cs| {
-		if let Some(ref mut i2c) = I2C_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			if i2c.address.read().bits() as u8 == address {
-				return;
-			}
-
-			i2c.address.write(|w| unsafe { w.address().bits(address.into()) } );
-		}
-	});
+fn rx_byte(i2c: &nrf52832_pac::TWI1) -> Result<u8, I2cError> {
+	// Wait for rx event or error out
+	while (i2c.events_rxdready.read().bits() == 0) && 
+		(i2c.events_error.read().bits() == 0) {}
 	
-	unsafe { CURRENT_ADDRESS = address };
+	// If error, bail out
+	if i2c.events_error.read().bits() > 0 {
+		i2c.events_error.write(|w| unsafe { w.bits(0) });
+		return Err(I2cError::RECEIVE);
+	}
+	
+	let byte = i2c.rxd.read().rxd().bits();
+
+	// Clear out the Rx event flag
+	i2c.events_rxdready.write(|w| unsafe { w.bits(0) });
+	
+	Ok(byte)
+}
+
+fn tx_byte(i2c: &nrf52832_pac::TWI1, byte: u8) -> Result<(), I2cError> {
+	// Wait for rx event or error out
+	i2c.events_txdsent.write(|w| unsafe { w.bits(0) });
+
+	// Load in the byte to be sent
+	i2c.txd.write(|w| unsafe { w.bits(byte.into()) });
+	
+	// Wait until transmission is completed
+	while (i2c.events_txdsent.read().bits() == 0) && 
+		(i2c.events_error.read().bits() == 0) {}
+		
+	// If error, bail out
+	if i2c.events_error.read().bits() > 0 {
+		i2c.events_error.write(|w| unsafe { w.bits(0) });
+		return Err(I2cError::TRANSMIT);
+	}
+	
+	// Clear out the Rx event flag
+	i2c.events_txdsent.write(|w| unsafe { w.bits(0) });
+	
+	Ok(())
+}
+
+fn send_stop(i2c: &nrf52832_pac::TWI1) -> Result<(), I2cError> {
+	// Clear stopped event.
+	i2c.events_stopped.write(|w| unsafe { w.bits(0) });
+
+	// Start stop condition.
+	i2c.tasks_stop.write(|w| unsafe { w.bits(1) });
+
+	// Wait until stop was sent.
+	while i2c.events_stopped.read().bits() == 0 &&
+		(i2c.events_error.read().bits() == 0) {}
+
+	// Bail out if we get an error instead.
+	if i2c.events_error.read().bits() != 0 {
+		i2c.events_error.write(|w| unsafe { w.bits(0) });
+		return Err(I2cError::STOP);
+	}
+	
+	Ok(())
 }
 
 //==============================================================================
