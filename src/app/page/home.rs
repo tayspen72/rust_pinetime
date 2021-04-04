@@ -23,6 +23,7 @@ use crate::mcu::rtc;
 //==============================================================================
 const BUTTON_HELD_RESTART_WARN: u32 = 1;
 const BUTTON_HELD_RESTART: u32 = 5;
+static mut SHOWING_RESTART_WARNING: bool = false;
 
 //==============================================================================
 // Public Functions
@@ -41,6 +42,8 @@ fn button_held_handler(last_press_time: u32){
 		mcu::restart();
 	}
 	else if time_diff >= BUTTON_HELD_RESTART_WARN {
+		unsafe { SHOWING_RESTART_WARNING = true; }
+
 		// Print the restart warning
 		font::write_minimal_line(
 			"Hold button".as_bytes(),
@@ -111,8 +114,16 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 			}
 		}
 		else {
-			//TOOD: Need to cler restart prompt if button is released
-			();
+			unsafe {
+				// Clear restart prompt if button is released
+				PRESS_TIMER_RUNNING = false;
+				
+				// Pretend to change page back to home to force update all
+				if SHOWING_RESTART_WARNING {
+					SHOWING_RESTART_WARNING = false;
+					page::change_page(d);
+				}
+			}
 		}
 	}
 }
