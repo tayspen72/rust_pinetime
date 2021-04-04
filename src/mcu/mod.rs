@@ -14,6 +14,7 @@ pub mod rtc;
 pub mod spi;
 pub mod timer;
 
+use cortex_m;
 use nrf52832_pac;
 use crate::app::info;
 
@@ -39,6 +40,7 @@ pub enum McuState {
 //==============================================================================
 pub fn init(wake_interval: rtc::WakeInterval) {
 	let peripherals = nrf52832_pac::Peripherals::take().unwrap();
+	// let cortex = cortex_m::Peripherals::take().unwrap();
 
 	peripherals.CLOCK.tasks_hfclkstart.write(|w| unsafe { w.bits(1) });
 	while peripherals.CLOCK.events_hfclkstarted.read().bits() == 0 {};
@@ -64,6 +66,10 @@ pub fn get_busy() -> McuState {
 		return McuState::TimerBusy;
 	}
 	McuState::Idle
+}
+
+pub fn restart() {
+	cortex_m::peripheral::SCB::sys_reset();
 }
 
 //==============================================================================
