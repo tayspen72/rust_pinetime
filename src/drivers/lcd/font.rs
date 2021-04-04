@@ -529,8 +529,8 @@ fn get_minimal_character(c: char) -> &'static MinimalCharacter {
 }
 
 #[allow(dead_code)]
-pub fn write_minimal_line(line: &[char], x_start: u16, y_start: u16, fg: lcd_api::Color, bg: lcd_api::Color, scale: u16) {
-	let char_width = x_start + (MINIMAL_CHARACTER_WIDTH * scale);
+pub fn write_minimal_line(line: &[u8], x_start: u16, y_start: u16, fg: lcd_api::Color, bg: lcd_api::Color, scale: u16) {
+	let char_width = (MINIMAL_CHARACTER_WIDTH * scale) + scale;
 	let max_chars = 240 / char_width as usize;
 	let len = if line.len() > max_chars { max_chars } else { line.len() };
 
@@ -540,13 +540,13 @@ pub fn write_minimal_line(line: &[char], x_start: u16, y_start: u16, fg: lcd_api
 }
 
 #[allow(dead_code)]
-pub fn write_minimal_character(c: char, x: u16, y: u16, fg: lcd_api::Color, bg: lcd_api::Color, scale: u16) {
+pub fn write_minimal_character(c: u8, x: u16, y: u16, fg: lcd_api::Color, bg: lcd_api::Color, scale: u16) {
 	let char_width = MINIMAL_CHARACTER_WIDTH * scale;
 	let char_height = MINIMAL_CHARACTER_HEIGHT * scale;
 
 	lcd_api::set_window(x, char_width, y, char_height);
 	lcd::write_command(st7789::COMMAND::MEMORY_WRITE);
-	let bytes = get_minimal_character(c).bytes;
+	let bytes = get_minimal_character(c as char).bytes;
 	let bg = (bg as u16).to_le_bytes();
 	let fg = (fg as u16).to_le_bytes();
 
