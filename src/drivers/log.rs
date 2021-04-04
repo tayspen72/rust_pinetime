@@ -1,10 +1,10 @@
 //==============================================================================
 // Notes
 //==============================================================================
-// drivers::debug.rs
-// The debug library is meant to be a scrolling log of entries. The log will 
-// need to be built. Later.
-// The log can be hidden in real-time, as needed. Maybe with a swipe up action?
+// drivers::log.rs
+// The logger library is meant to be a scrolling circular buffer of entries.
+// The log can be updated in the background in real-time, as needed. 
+// When the log  page is shown, only the current entries will be shown.
 
 //==============================================================================
 // Crates and Mods
@@ -25,17 +25,17 @@ struct LogLine{
 //==============================================================================
 // Variables
 //==============================================================================
- const DEBUG_INITIAL_X: u16 = 0;
- const DEBUG_INITIAL_Y: u16 = 0;
- const DEBUG_SCALE: u16 = 2;
- const DEBUG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
- const DEBUG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
- const DEBUG_WELCOME: &'static str = "** Log Output Window **";
-
+ const LOG_INITIAL_X: u16 = 0;
+ const LOG_INITIAL_Y: u16 = 0;
+ const LOG_SCALE: u16 = 2;
+ const LOG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
+ const LOG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
+ const LOG_WELCOME: &'static str = "** Log Output Window **";
 const LOG_PREFIX_LENGTH: usize = 3;
 const LOG_MAX_LENGTH: usize = 24;
 const LOG_ACTUAL_LEN: usize = LOG_MAX_LENGTH - LOG_PREFIX_LENGTH;
 const LOG_LINE_ENTRIES: usize = 15;
+
 static mut LOG_LINES_ACTIVE: usize = 0;
 static mut LOG_LINES:[LogLine; LOG_LINE_ENTRIES] = [
 	LogLine { active: false, stale: true, line: [ 0x00; LOG_MAX_LENGTH ] };
@@ -47,7 +47,7 @@ static mut LOG_LINES:[LogLine; LOG_LINE_ENTRIES] = [
 //==============================================================================
 pub fn init() {
 	// Push the welcome message
-	push_log(DEBUG_WELCOME);
+	push_log(LOG_WELCOME);
 }
 
 pub fn make_stale() {
@@ -127,8 +127,8 @@ pub fn push_log_number(string: &'static str, num: &u32) {
 // Private Functions
 //==============================================================================
 fn clear_line(line_number: usize) {
-	let y = DEBUG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT * DEBUG_SCALE);
-	lcd_api::fill_rectangle(0, 240, y, font::MINIMAL_CHARACTER_HEIGHT * DEBUG_SCALE, DEBUG_BACKGROUND);
+	let y = LOG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT * LOG_SCALE);
+	lcd_api::fill_rectangle(0, 240, y, font::MINIMAL_CHARACTER_HEIGHT * LOG_SCALE, LOG_BACKGROUND);
 }
 
 fn get_line_length(line_number: usize) -> usize {
@@ -171,11 +171,11 @@ fn pop_log() {
 }
 
 fn write_line(line_number: usize) {
-	let y = DEBUG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT * DEBUG_SCALE);
+	let y = LOG_INITIAL_Y + ((line_number as u16) * font::MINIMAL_CHARACTER_HEIGHT * LOG_SCALE);
 	let len = get_line_length(line_number);
 
 	unsafe { 
-		font::write_minimal_line(&LOG_LINES[line_number].line[0..len], DEBUG_INITIAL_X, y, DEBUG_FOREGROUND, DEBUG_BACKGROUND, DEBUG_SCALE);
+		font::write_minimal_line(&LOG_LINES[line_number].line[0..len], LOG_INITIAL_X, y, LOG_FOREGROUND, LOG_BACKGROUND, LOG_SCALE);
 
 		// Update the stale line flag showing it has been displayed
 		LOG_LINES[line_number].stale = false;

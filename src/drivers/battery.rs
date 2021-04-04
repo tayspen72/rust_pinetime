@@ -9,7 +9,7 @@
 //==============================================================================
 use crate::app::info;
 use crate::config;
-use super::debug;
+use super::log;
 use crate::mcu::{adc, gpio, input, rtc};
 
 //==============================================================================
@@ -118,7 +118,7 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 			LAST_BATTERY_TIMESTAMP = rtc::get_timestamp();
 			let tmp_voltage = get_battery_voltage();
 			
-			debug::push_log_number("Battery: ", &(tmp_voltage as u32));
+			log::push_log_number("Battery: ", &(tmp_voltage as u32));
 			
 			if LAST_BATTERY_VOLTAGE != tmp_voltage {
 				LAST_BATTERY_VOLTAGE = tmp_voltage;
@@ -138,7 +138,7 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 			d.change_flags.charger_state = true;
 			d.flags.charger_connected = CHARGER_CONNECTED;
 
-			debug::push_log_number("Charger state: ", &( 
+			log::push_log_number("Charger state: ", &( 
 				if CHARGER_CONNECTED { 1 } else { 0 }));
 		}
 	}

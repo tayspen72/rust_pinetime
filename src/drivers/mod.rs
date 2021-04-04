@@ -9,8 +9,8 @@
 pub mod battery;
 pub mod button;
 pub mod clock;
-pub mod debug;
 pub mod lcd;
+pub mod log;
 pub mod touch;
 
 use crate::app::info;
@@ -41,7 +41,7 @@ pub enum DriversState{
 pub fn init() {
 	// Must be initialized in this order
 	lcd::lcd_api::init();
-	debug::init();
+	log::init();
 	
 	battery::init();
 	button::init();
@@ -66,7 +66,7 @@ pub fn get_busy() -> DriversState {
 // Task Handler
 //==============================================================================
 pub fn task_handler(d: &mut info::DeviceInfo){
-	debug::task_handler(d);
+	log::task_handler(d);
 	battery::task_handler(d);
 	button::task_handler(d);
 	clock::task_handler(d);

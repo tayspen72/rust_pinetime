@@ -12,7 +12,7 @@ use crate::config;
 use crate::mcu::{gpio, input};
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
 use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
-use super::debug;
+use super::log;
 
 //==============================================================================
 // Enums, Structs, and Types
@@ -81,10 +81,10 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 			UNHANDLED_PRESSES = UNHANDLED_PRESSES - 1;
 
 			if d.flags.button_pressed {
-				debug::push_log("Button pressed!");
+				log::push_log("Button pressed!");
 			}
 			else {
-				debug::push_log("Button released!");
+				log::push_log("Button released!");
 			}
 		}
 	}

@@ -7,7 +7,7 @@
 // Crates and Mods
 //==============================================================================
 use crate::app::{info, page};
-use crate::drivers::debug;
+use crate::drivers::log;
 use crate::drivers::touch::Gesture;
 
 //==============================================================================
@@ -25,7 +25,7 @@ use crate::drivers::touch::Gesture;
 //==============================================================================
 #[allow(dead_code)]
 pub fn start_page() {
-	debug::make_stale();
+	log::make_stale();
 }
 
 //==============================================================================
