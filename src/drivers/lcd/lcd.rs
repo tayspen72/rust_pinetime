@@ -62,7 +62,7 @@ pub fn write_command(command: st7789::COMMAND) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinLow);
 
-	spi::tx_data(&[command as u8]);
+	spi::write_data(&[command as u8]);
 
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
@@ -72,7 +72,7 @@ pub fn write_data(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	spi::tx_data(data);
+	spi::write_data(data);
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }
@@ -81,7 +81,7 @@ pub fn write_block(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	spi::write_data(data, DMA_ENABLED);
+	spi::write_data(data);
 	
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }
@@ -90,7 +90,7 @@ pub fn write_block_solid(color: u16, len: u32) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	spi::write_data_solid(color, len, DMA_ENABLED);
+	spi::write_data_solid(color, len);
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
 }

@@ -58,10 +58,6 @@ pub fn get_busy() -> McuState {
 	if adc::get_busy() {
 		return McuState::AdcBusy;
 	}
-	
-	if spi::get_busy() {
-		return McuState::SpiBusy;
-	}
 	if timer::get_busy() {
 		return McuState::TimerBusy;
 	}

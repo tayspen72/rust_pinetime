@@ -37,6 +37,13 @@ pub struct SpiLine{
 
 type ArrayList = [u8];
 
+pub enum SpiError{
+	DMA,
+	HANDLER,
+	RECEIVE, 
+	TRANSMIT,
+}
+
 //==============================================================================
 // Variables
 //==============================================================================
@@ -67,14 +74,7 @@ pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
 	free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(spim0)));
 }
 
-pub fn get_busy() -> bool {
-	// TODO: When DMA working, maybe make handled by interrupt?
-	// For now, return false
-
-	false
-}
-
-pub fn write_data(data: &ArrayList, use_dma: bool) {
+pub fn write_data(data: &ArrayList) {
 	let mut num_bytes = data.len();
 	let mut index = 0;
 
@@ -82,25 +82,13 @@ pub fn write_data(data: &ArrayList, use_dma: bool) {
 		let transfer_size = if num_bytes > 256 { 256 } else { num_bytes };
 		num_bytes = num_bytes - transfer_size;
 	
-		if use_dma {
-			// TODO: warning! Not working and will cause PANIC!
-			setup_block(&data[index..index+transfer_size]);
-			start_block();
-		}
-		else {
-			tx_data(&data[index..index+transfer_size]);
-		}
+		tx_data(&data[index..index+transfer_size]);
 
 		index = index + transfer_size;
 	}
-
-	// If using DMA, wait for block to finish before quitting
-	if use_dma {
-		wait_block();
-	}
 }
 
-pub fn write_data_solid(color: u16, len: u32, use_dma: bool) {
+pub fn write_data_solid(color: u16, len: u32) {
 	// build a single block and setup the DMA once
 	// let color = color.to_le_bytes();
 	// let mut block: [u8; 256] = [0; 256];
@@ -130,26 +118,6 @@ pub fn write_data_solid(color: u16, len: u32, use_dma: bool) {
 
 		write_data(&block[0..(transfer_size) as usize], false);
 	}
-
-	// If using DMA, wait for block to finish before quitting
-	if use_dma {
-		wait_block();
-	}
-}
-
-pub fn tx_data(data: &ArrayList) {
-	free(|cs| {
-		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			for i in 0..data.len() {
-				spi.events_ready.write(|w| unsafe { w.bits(0) });
-				spi.txd.write(|w| unsafe { w.txd().bits(data[i]) });
-
-				while spi.events_ready.read().bits() == 0 {};
-
-				spi.rxd.read().bits();
-			}
-		}
-	});
 }
 
 //==============================================================================
@@ -184,88 +152,9 @@ fn configure(spi: &nrf52832_pac::SPI0, spim: &nrf52832_pac::SPIM0) {
 	spi.enable.write(|w| w.enable().enabled());
 }
 
-#[inline(always)]
-fn clear_dma_finished(spim: &nrf52832_pac::SPIM0) {
-	spim.events_stopped.write(|w| unsafe { w.bits(0) });
-	spim.events_endrx.write(|w| unsafe { w.bits(0) });
-	spim.events_end.write(|w| unsafe { w.bits(0) });
-	spim.events_endtx.write(|w| unsafe { w.bits(0) });
-	spim.events_started.write(|w| unsafe { w.bits(0) });
-}
+fn tx_byte(spi: &nrf52832_pac::SPI0, byte: u8) -> Result<(), SpiError> {
 
-#[inline(always)]
-fn get_dma_finished(spim: &nrf52832_pac::SPIM0) -> bool {
-	if spim.events_started.read().bits() == 1 {
-		spim.events_end.read().bits() == 1
-	}
-	else {
-		true
-	}
-}
-
-fn get_open_spim_bank() -> (usize, usize) {
-	match free(|cs| SPIM_ACTIVE_BANK.borrow(cs).get()) {
-		ActiveBank::BankA => (config::SPIM_RX_BANKB, config::SPIM_TX_BANKB),
-		ActiveBank::BankB => (config::SPIM_RX_BANKA, config::SPIM_TX_BANKA),
-	}
-}
-
-fn setup_block(block: &ArrayList){
-	// Pull ptrs to the open RAM banks
-	let (rx_ptr, tx_ptr): (usize, usize) = get_open_spim_bank();
-	let len = if block.len() > 256 { 256 } else { block.len() };
-	// Toggle the active bank
-	toggle_spim_bank();
-
-	for i in 0..len {
-		unsafe { 
-			ptr::write((tx_ptr+i) as *mut u8, block[i]);
-		}
-	}
-
-	free(|cs| {
-		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			spim.enable.write(|w| w.enable().disabled());
-			spim.rxd.maxcnt.write(|w| unsafe { w.maxcnt().bits((len-1) as u8) });
-			spim.rxd.ptr.write(|w| unsafe { w.ptr().bits(rx_ptr as u32) });
-			spim.txd.maxcnt.write(|w| unsafe { w.maxcnt().bits((len-1) as u8) });
-			spim.txd.ptr.write(|w| unsafe { w.ptr().bits(tx_ptr as u32) });
-			spim.enable.write(|w| w.enable().enabled());
-		}
-	});
-}
-
-fn start_block() {
-	free(|cs| {
-		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			while !get_dma_finished(spim) {}
-			
-			clear_dma_finished(spim);
-			
-			spim.tasks_start.write(|w| unsafe { w.bits(1) });
-		}
-	});
-}
-
-fn toggle_spim_bank() {
-	free(|cs| SPIM_ACTIVE_BANK.borrow(cs).set(
-		if let ActiveBank::BankA = SPIM_ACTIVE_BANK.borrow(cs).get() {
-			ActiveBank::BankB
-		}
-		else {
-			ActiveBank::BankA
-		}
-	));
-}
-
-fn wait_block() {
-	free(|cs| {
-		if let Some(ref mut spim) = SPIM_HANDLE.borrow(cs).borrow_mut().deref_mut() {
-			while !get_dma_finished(spim) {}
-			
-			clear_dma_finished(spim);
-		}
-	});
+	Ok(())
 }
 
 //==============================================================================
