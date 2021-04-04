@@ -95,7 +95,7 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 		page::AppPage::Settings => page::settings::task_handler(d),
 		page::AppPage::Startup => {
 			page::startup::print_page();
-			d.app_page = page::AppPage::Log;
+			d.app_page = page::AppPage::Home;
 			page::change_page(d);
 		},
 	}
