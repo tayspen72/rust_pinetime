@@ -8,7 +8,7 @@
 //==============================================================================
 use crate::app::info;
 use crate::config;
-use crate::drivers::debug;
+use crate::drivers::log;
 use crate::mcu::{gpio, input, i2c};
 
 //==============================================================================
@@ -78,13 +78,13 @@ pub fn init() {
 //==============================================================================
 // Private Functions
 //==============================================================================
-pub fn get_coordinate(raw_msb: u8, raw_lsb: u8) -> u16 {
+fn get_coordinate(raw_msb: u8, raw_lsb: u8) -> u16 {
 	let mut c: u16 = (((raw_msb & 0x0F) as u16) << 8) as u16;
 	c = c | (raw_lsb as u16);
 	c
 }
 
-pub fn get_event(raw: u8) -> Event {
+fn get_event(raw: u8) -> Event {
 	match (raw & 0xC0) >> 6 {
 		0 => Event::Down,
 		1 => Event::Up,
@@ -93,7 +93,16 @@ pub fn get_event(raw: u8) -> Event {
 	}
 }
 
-pub fn get_gesture(raw: u8) -> Gesture {
+fn get_event_string(event: Event) -> &'static str {
+	match event {
+		Event::Down => "touch: down event",
+		Event::Up => "touch: up event",
+		Event::Contact => "touch: contact",
+		Event::Unknown => "touch: unknown",
+	}
+}
+
+fn get_gesture(raw: u8) -> Gesture {
 	match raw {
 		0x0 => Gesture::None,
 		0x1 => Gesture::SlideDown,
@@ -107,7 +116,21 @@ pub fn get_gesture(raw: u8) -> Gesture {
 	}
 }
 
-pub fn get_pressure(raw: u8) -> u8 {
+fn get_gesture_string(gesture: Gesture) -> &'static str {
+	match gesture {
+		Gesture::None => 		"touch: gesture none",
+		Gesture::SlideDown => 	"touch: slide down",
+		Gesture::SlideUp => 	"touch: slide up",
+		Gesture::SlideLeft => 	"touch: slide left",
+		Gesture::SlideRight => 	"touch: slide right",
+		Gesture::SinglePress => "touch: single press",
+		Gesture::DoublePress => "touch: double press",
+		Gesture::LongPress => 	"touch: long press",
+		Gesture::Unknown => 	"touch: gesture unknown",
+	}
+}
+
+fn get_pressure(raw: u8) -> u8 {
 	raw
 }
 
@@ -121,11 +144,10 @@ fn read_event() -> TouchEvent {
 			pressure: get_pressure(LAST_EVENT_BUFFER[7])
 		};
 
-		debug::push_log_number("gesture: ", &(touch.gesture as u32));
-		debug::push_log_number("event: ", &(touch.event as u32));
-		debug::push_log_number("x: ", &(touch.x as u32));
-		debug::push_log_number("y: ", &(touch.y as u32));
-		debug::push_log_number("pressure: ", &(touch.pressure as u32));
+		log::push_log(get_gesture_string(touch.gesture));
+		log::push_log(get_event_string(touch.event));
+		log::push_log_number("touch: x ", &(touch.x as u32));
+		log::push_log_number("touch: y ", &(touch.y as u32));
 
 		touch
 	}
@@ -136,7 +158,7 @@ fn touch_handler() {
 		// Attempt read touch event
 		let res = i2c::write_then_read(config::TOUCH_I2C_ADDRESS, &[0x00],  &mut LAST_EVENT_BUFFER);
 		if let Err(_e) = res {
-			debug::push_log("Failed to read touch sensor");
+			log::push_log("Failed to read touch sensor");
 		}
 		else{
 			UNHANDLED_EVENTS = true;
