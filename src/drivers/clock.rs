@@ -62,45 +62,38 @@ pub fn init() {
 	});
 }
 
-pub fn update_time() {
-	let time = free(|cs| TIME.borrow(cs).get());
-	let digits: [u8; 4] = [
-		(time.hours/10)%10,
-		time.hours%10,
-		(time.minutes/10)%10,
-		time.minutes%10,
-	];
-
-	unsafe {
-		for i in 0..4 {
-			if digits[i] != DIGITS_ON_DISPLAY[i] {
-				DIGITS_ON_DISPLAY[i] = digits[i];
-				lcd::font::write_time_character(digits[i], DIGITS_X[i], DIGITS_Y[i], lcd::lcd_api::Color::Blue, lcd::lcd_api::Color::Black);
-			}
-		}
-	}
+pub fn update_time(is_military_time: bool) {
+	write(get_digits(is_military_time), false);
 }
 
-pub fn write_time() {
-	let time = free(|cs| TIME.borrow(cs).get());
-	let digits: [u8; 4] = [
-		(time.hours/10)%10,
-		time.hours%10,
-		(time.minutes/10)%10,
-		time.minutes%10,
-	];
-
-	unsafe {
-		for i in 0..4 {
-			DIGITS_ON_DISPLAY[i] = digits[i];
-			lcd::font::write_time_character(digits[i], DIGITS_X[i], DIGITS_Y[i], lcd::lcd_api::Color::Blue, lcd::lcd_api::Color::Black);
-		}
-	}
+pub fn write_time(is_military_time: bool) {
+	write(get_digits(is_military_time), true);
 }
 
 //==============================================================================
 // Private Functions
 //==============================================================================
+fn get_digits(is_military_time: bool) -> [u8; 4] {
+	let time = free(|cs| TIME.borrow(cs).get());
+	let mut hours = time.hours;
+
+	// Bring in militart time flag as needed
+	if !is_military_time {
+		hours = hours % 12;
+		if hours == 0 {
+			hours = 12;
+		}
+	}
+
+	// Return each digit
+	[
+		(hours/10)%10,
+		hours%10,
+		(time.minutes/10)%10,
+		time.minutes%10,
+	]
+}
+
 fn update_add_second() {
 	free(|cs| {
 		let mut time = TIME.borrow(cs).get();
@@ -122,6 +115,19 @@ fn update_add_second() {
 
 		TIME.borrow(cs).set(time);
 	});
+}
+
+fn write(digits: [u8; 4], force_update: bool) {
+	unsafe {
+		for i in 0..4 {
+			if force_update || digits[i] != DIGITS_ON_DISPLAY[i] {
+				DIGITS_ON_DISPLAY[i] = digits[i];
+				if i > 0 || digits[i] > 0 {
+					lcd::font::write_time_character(digits[i], DIGITS_X[i], DIGITS_Y[i], lcd::lcd_api::Color::Blue, lcd::lcd_api::Color::Black);
+				}
+			}
+		}
+	}
 }
 
 //==============================================================================
