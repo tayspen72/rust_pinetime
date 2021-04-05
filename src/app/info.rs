@@ -26,6 +26,7 @@ pub struct DeviceInfoFlags{
 	pub charger_connected: bool,
 	pub button_pressed: bool,
 	pub debug_log_active: bool,
+	pub military_time: bool,
 }
 
 pub struct DeviceInfo {
@@ -58,6 +59,7 @@ const DEVICE_INFO_DEFAULTS: DeviceInfo = DeviceInfo {
 		charger_connected: false,
 		button_pressed: false,
 		debug_log_active: true,
+		military_time: false,
 	},
 	app_page: page::AppPage::Startup,
 	battery_level: drivers::battery::BatteryLevel::Level4,

@@ -41,7 +41,7 @@ pub fn change_page(d: &mut info::DeviceInfo) {
 	lcd_api::fill_background(lcd_api::Color::Black);
 
 	match d.app_page {
-		AppPage::Home => home::start_page(),
+		AppPage::Home => home::start_page(d),
 		AppPage::Notifications => notifications::start_page(),
 		AppPage::Log => log::start_page(),
 		AppPage::Settings => settings::start_page(d),

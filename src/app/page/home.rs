@@ -28,8 +28,8 @@ static mut SHOWING_RESTART_WARNING: bool = false;
 //==============================================================================
 // Public Functions
 //==============================================================================
-pub fn start_page() {
-	clock::write_time();
+pub fn start_page(d: &info::DeviceInfo) {
+	clock::write_time(d.flags.military_time);
 }
 
 //==============================================================================
@@ -89,7 +89,7 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 	}
 	
 	if d.change_flags.time_change {
-		clock::update_time();
+		clock::update_time(d.flags.military_time);
 	}
 
 	if d.change_flags.touch_event {
