@@ -25,12 +25,12 @@ struct LogLine{
 //==============================================================================
 // Variables
 //==============================================================================
- const LOG_INITIAL_X: u16 = 0;
- const LOG_INITIAL_Y: u16 = 0;
- const LOG_SCALE: u16 = 2;
- const LOG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
- const LOG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
- const LOG_WELCOME: &'static str = "** Log Output Window **";
+const LOG_INITIAL_X: u16 = 0;
+const LOG_INITIAL_Y: u16 = 0;
+const LOG_SCALE: u16 = 2;
+const LOG_BACKGROUND: lcd_api::Color = lcd_api::Color::Black;
+const LOG_FOREGROUND: lcd_api::Color = lcd_api::Color::White;
+const LOG_WELCOME: &'static str = "** Log Output Window **";
 const LOG_PREFIX_LENGTH: usize = 3;
 const LOG_MAX_LENGTH: usize = 24;
 const LOG_ACTUAL_LEN: usize = LOG_MAX_LENGTH - LOG_PREFIX_LENGTH;
