@@ -3,6 +3,9 @@
 //==============================================================================
 // app::page::settings.rs
 
+// TODO: Make the settings page show 9 icons - each 60x40 pixels
+// TODO: Handle touch event when pressing the icon - eg brightness adjust
+
 //==============================================================================
 // Crates and Mods
 //==============================================================================
@@ -13,67 +16,110 @@ use crate::drivers::touch::Gesture;
 //==============================================================================
 // Enums, Structs, and Types
 //==============================================================================
-
+struct BatteryIcon {
+	x: u16,
+	y: u16,
+	low_color: lcd_api::Color,
+	charging_color: lcd_api::Color,
+	outline_color: lcd_api::Color,
+}
 
 //==============================================================================
 // Variables
 //==============================================================================
 // Battery and Charger
-pub const BATTERY_ICON_X: u16 = 1;
-pub const BATTERY_ICON_Y: u16 = 1;
-pub const BATTERY_OUTLINE_COLOR: lcd_api::Color = lcd_api::Color::White;
-pub const BATTERY_FILL_COLOR: lcd_api::Color = lcd_api::Color::Black;
-pub const CHARGER_COLOR: lcd_api::Color = lcd_api::Color::Green;
+const BATTERY: BatteryIcon = BatteryIcon {
+	x: 10,
+	y: 40,
+	low_color: lcd_api::Color::Red,
+	charging_color: lcd_api::Color::Green,
+	outline_color: lcd_api::Color::White
+};
+
+const BACKGROUND_COLOR: lcd_api::Color = lcd_api::Color::Black;
 
 //==============================================================================
 // Public Functions
 //==============================================================================
 #[allow(dead_code)]
 pub fn start_page(d: &mut info::DeviceInfo) {
-	write_battery_level(d.battery_level as u8, d.battery_voltage, d.flags.charger_connected);
+	font::write_minimal_line(
+		b"Settings",
+		56,
+		3,
+		lcd_api::Color::White,
+		lcd_api::Color::Black,
+		3
+	);
+	write_all_icons(d);
+	
 }
 
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn write_battery_level(level: u8, voltage: u16, charging: bool) {
-	// Draw outline
-	lcd_api::fill_rectangle(BATTERY_ICON_X + 7, 29, BATTERY_ICON_Y, 15, BATTERY_OUTLINE_COLOR);
+pub fn write_all_icons(d: &mut info::DeviceInfo) {
+	write_battery_icon(BATTERY.x, BATTERY.y, d);
+}
 
-	// Fill in the middle of the battery
-	let color = if charging { CHARGER_COLOR } else { BATTERY_FILL_COLOR };
-	lcd_api::fill_rectangle(BATTERY_ICON_X + 9, 25, BATTERY_ICON_Y + 2, 11, color);
+fn write_battery_icon(x: u16, y: u16, d: &mut info::DeviceInfo) {
+	// Draw outline
+	let level = d.battery_level as u8;
+	let voltage = d.battery_voltage;
+	let charging = d.flags.charger_connected;
+
+	let outline = if level == 0 { BATTERY.low_color } else { BATTERY.outline_color };
+	let fill = if charging { BATTERY.charging_color } else { BACKGROUND_COLOR };
+
+	// Draw outline
+	lcd_api::fill_rectangle(x + 12, 48, y, 5, outline);
+	lcd_api::fill_rectangle(x + 12, 5, y + 5, 24, outline);
+	lcd_api::fill_rectangle(x + 55, 5, y + 5, 24, outline);
+	lcd_api::fill_rectangle(x + 12, 48, y + 29, 5, outline);
+	if charging {
+		lcd_api::fill_rectangle(x, 4, y + 12, 10, BATTERY.charging_color);
+		lcd_api::fill_rectangle(x + 4, 8, y + 2, 30, BATTERY.charging_color);
+	}
+	else {
+		lcd_api::fill_rectangle(x + 4, 8, y + 2, 4, BACKGROUND_COLOR);
+		lcd_api::fill_rectangle(x, 8, y + 6, 22, BACKGROUND_COLOR);
+		lcd_api::fill_rectangle(x + 4, 8, y + 28, 4, BACKGROUND_COLOR);
+	}
+	lcd_api::fill_rectangle(x + 8, 4, y + 6, 22, outline);
+
+	// Fill battery
+	lcd_api::fill_rectangle(x + 17, 38, y + 5, 24, fill);
 
 	// Print out battery level blocks
-	for l in 0..level {
-		let x = BATTERY_ICON_X + 10 + (l as u16 * 6);
-		lcd_api::fill_rectangle(x, 5, BATTERY_ICON_Y + 3, 9, BATTERY_OUTLINE_COLOR);
+	if level > 0 {
+		for lev in 0..(level - 1) {
+			lcd_api::fill_rectangle(
+				x + 19 + (lev as u16 * 9), 
+				7,
+				y + 7, 
+				20,
+				outline
+			);
+		}
 	}
 
 	// Write out the voltage value
-	let mut divider: u16 = 1000;
-	let color = if charging { CHARGER_COLOR } else { BATTERY_OUTLINE_COLOR };
-	for d in 0..4 {
-		let v: u8 = if d == 1 {
-			0x2E
-		}
-		else {
-			divider = divider / 10;
-			((voltage / divider) % 10) as u8
-		};
-		let x = BATTERY_ICON_X + 8 + (d as u16 * 6);
-		
-		font::write_minimal_character(0x30 + v, x, BATTERY_ICON_Y + 16, color, BATTERY_FILL_COLOR, 1)
-	}
-
-	// Print (or remove) the charger status icon
-	let color = if charging { CHARGER_COLOR } else { BATTERY_FILL_COLOR };
-	lcd_api::fill_rectangle(BATTERY_ICON_X, 7, BATTERY_ICON_Y, 15, color);
-	if charging {
-		lcd_api::fill_rectangle(BATTERY_ICON_X, 4, BATTERY_ICON_Y, 6, BATTERY_FILL_COLOR);
-		lcd_api::fill_rectangle(BATTERY_ICON_X + 2, 2, BATTERY_ICON_Y + 9, 6, BATTERY_FILL_COLOR);
-	}
-	lcd_api::fill_rectangle(BATTERY_ICON_X + 5, 2, BATTERY_ICON_Y + 3, 9, BATTERY_OUTLINE_COLOR);
+	let outline = if charging { BATTERY.charging_color } else { BATTERY.outline_color };
+	let string: [u8; 5] = [
+		(0x30 + (voltage / 100) % 10) as u8,
+		0x2E,
+		(0x30 + (voltage / 10) % 10) as u8,
+		(0x30 + (voltage % 10)) as u8,
+		'v' as u8
+	];
+	font::write_minimal_line(
+		&string, 
+		x + 5, 
+		y + 36, 
+		outline, 
+		BACKGROUND_COLOR,
+		2
+	);
 }
 
 //==============================================================================
@@ -88,7 +134,7 @@ fn write_battery_level(level: u8, voltage: u16, charging: bool) {
 pub fn task_handler(d: &mut info::DeviceInfo) {
 	// Only change on swipe up - to close settings pulldown
 	if d.change_flags.touch_event {
-		if let Gesture::SlideDown = d.touch.gesture {
+		if let Gesture::SlideUp = d.touch.gesture {
 			d.app_page = page::AppPage::Home;
 			page::change_page(d);
 			return;
@@ -105,7 +151,7 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 	}
 
 	// Update reading when it chages
-	if d.change_flags.battery_voltage {
-		write_battery_level(d.battery_level as u8, d.battery_voltage, d.flags.charger_connected);
+	if d.change_flags.battery_voltage  || d.change_flags.charger_state {
+		write_battery_icon(BATTERY.x, BATTERY.y, d);
 	}
 }
