@@ -46,7 +46,7 @@ fn button_held_handler(last_press_time: u32){
 
 		// Print the restart warning
 		font::write_minimal_line(
-			"Hold button".as_bytes(),
+			b"Hold button",
 			20, 
 			95, 
 			lcd_api::Color::White,
@@ -54,7 +54,7 @@ fn button_held_handler(last_press_time: u32){
 			3
 		);
 		font::write_minimal_line(
-			"to restart!".as_bytes(),
+			b"to restart!",
 			20, 
 			119, 
 			lcd_api::Color::White,
