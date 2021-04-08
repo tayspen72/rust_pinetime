@@ -7,6 +7,7 @@
 // Crates and Mods
 //==============================================================================
 pub mod adc;
+pub mod ble;
 pub mod gpio;
 pub mod i2c;
 pub mod input;
@@ -46,6 +47,7 @@ pub fn init(wake_interval: rtc::WakeInterval) {
 	while peripherals.CLOCK.events_hfclkstarted.read().bits() == 0 {};
 
 	adc::init(peripherals.SAADC);
+	ble::init();
 	gpio::init(peripherals.P0);
 	input::init(peripherals.GPIOTE);
 	i2c::init(peripherals.TWI1);
@@ -77,5 +79,6 @@ pub fn restart() {
 // Task Handler
 //==============================================================================
 pub fn task_handler(_d: &info::DeviceInfo) {
+	ble::task_handler();
 	input::task_handler();
 }
