@@ -66,13 +66,18 @@ fn get_busy(d: &mut info::DeviceInfo) -> bool {
 	}
 
 	if let drivers::DriversState::Idle = drivers::get_busy() { 
+		();
+	}
+	else {
 		return true;
 	}
 
 	if let mcu::McuState::Idle = mcu::get_busy() {
-		return true;
+		false
 	}
-	false
+	else {
+		true
+	}
 }
 
 //==============================================================================
