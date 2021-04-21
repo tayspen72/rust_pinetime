@@ -6,7 +6,7 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
-use nrf52832_pac::{twi0, spi0, uart0};
+use nrf52832_pac::{twi0, spi0, spim0, uart0};
 
 //==============================================================================
 // Accelerometer
@@ -73,6 +73,20 @@ pub const SPI_ORDER: spi0::config::ORDER_A = spi0::config::ORDER_A::MSBFIRST;
 pub const SPI_MOSI_PIN: u8 			= 3;
 pub const SPI_MISO_PIN: u8 			= 4;
 pub const SPI_SCLK_PIN: u8 			= 2;
+
+//==============================================================================
+// SPI and SPIM
+//==============================================================================
+pub const SPIM_CPHA: spim0::config::CPHA_A = spim0::config::CPHA_A::TRAILING;
+pub const SPIM_CPOL: spim0::config::CPOL_A = spim0::config::CPOL_A::ACTIVELOW;
+pub const SPIM_FREQUENCY: spim0::frequency::FREQUENCY_A = spim0::frequency::FREQUENCY_A::M8;
+pub const SPIM_ORDER: spim0::config::ORDER_A = spim0::config::ORDER_A::MSBFIRST;
+pub const SPIM_DMA_MAX: u32 = 0x20010000;
+pub const SPIM_DMA_MIN: u32 = 0x20000000;
+pub const SPIM_DMA_RX_PTR: u32 = 0x2000FE00;
+pub const SPIM_DMA_TX_PTR_A: u32 = 0x2000FD00;
+pub const SPIM_DMA_TX_PTR_B: u32 = 0x2000FC00;
+pub const SPIM_DMA_SIZE: u32 = 256;
 
 //==============================================================================
 // Touch Sensor

@@ -12,6 +12,7 @@ pub mod i2c;
 pub mod input;
 pub mod rtc;
 pub mod spi;
+pub mod spim;
 pub mod timer;
 
 use cortex_m;
@@ -50,7 +51,8 @@ pub fn init(wake_interval: rtc::WakeInterval) {
 	input::init(peripherals.GPIOTE);
 	i2c::init(peripherals.TWI1);
 	rtc::init(peripherals.RTC0, &peripherals.CLOCK, wake_interval);
-	spi::init(peripherals.SPI0, peripherals.SPIM0);
+	spi::init(peripherals.SPI0);
+	spim::init(peripherals.SPIM0);
 	timer::init(peripherals.TIMER0);
 }
 

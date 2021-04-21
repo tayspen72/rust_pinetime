@@ -7,9 +7,11 @@
 //==============================================================================
 // Crates and Mods
 //==============================================================================
+use heapless::Vec;
+use heapless::consts::{U254, U255};
 use crate::config;
 use crate::drivers::log;
-use crate::mcu::{gpio, spi, timer};
+use crate::mcu::{gpio, spi, spim, timer};
 use nrf52832_pac::p0::pin_cnf::DIR_A as DIR;
 use nrf52832_pac::p0::pin_cnf::PULL_A as PULL;
 
@@ -86,8 +88,33 @@ pub fn write_block(data: &[u8]) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	if let Err(_e) = spi::write(data) {
-		log::push_log("Spi write block failed");
+	let mut bytes_remaining = data.len();
+	let mut current_index: usize = 0;
+	let mut v: Vec<u8, U255> = Vec::new();
+
+	while bytes_remaining > 0 {
+		v.clear();
+		let bytes_this_transfer = if bytes_remaining > 0xFF {
+			0xFF
+		}
+		else {
+			bytes_remaining
+		};
+
+		if let Ok(()) = v.extend_from_slice(
+			&data[current_index..(current_index + bytes_this_transfer)]
+		) {
+			if let Err(_e) = spim::write(&v[..bytes_this_transfer]) {
+				log::push_log("Spim write block failed");
+				break;
+			}
+		}
+		else {
+			break;
+		}
+
+		current_index += bytes_this_transfer;
+		bytes_remaining -= bytes_this_transfer;
 	}
 	
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);
@@ -97,8 +124,31 @@ pub fn write_block_solid(color: u16, len: u32) {
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinLow);
 	gpio::set_pin_state(config::LCD_DCX_PIN, gpio::PinState::PinHigh);
 
-	if let Err(_e) = spi::write_u16(color, len) {
-		log::push_log("Spi write u16 failed");
+	let block: [u16; 127] = [color; 127];
+	let block: [u8; 254] = unsafe {
+		core::mem::transmute::<[u16; 127], [u8; 254]>(block)
+	};
+	let mut v: Vec<u8, U254> = Vec::new();
+	let mut remaining = len;
+	if let Ok(()) = v.extend_from_slice(&block[..]) {
+		while remaining > 0 {
+			if remaining > 127 {
+				if let Err(_e) = spim::write(&v[..]) {
+					log::push_log("Spim write solid failed");
+				}
+				remaining -= 127;
+			}
+			else {
+				let end: usize = (remaining * 2) as usize;
+				if let Err(_e) = spim::write(&v[0..end]) {
+					log::push_log("Spim write solid failed");
+				}
+				remaining = 0;
+			}
+		}
+	}
+	else {
+		log::push_log("Vec extend failed");
 	}
 
 	gpio::set_pin_state(config::LCD_CS_PIN, gpio::PinState::PinHigh);

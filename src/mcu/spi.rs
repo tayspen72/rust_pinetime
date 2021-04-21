@@ -30,7 +30,6 @@ pub struct SpiLine{
 
 #[allow(dead_code)]
 pub enum SpiError{
-	DMA,
 	HANDLER,
 	RECEIVE, 
 	TRANSMIT,
@@ -51,22 +50,21 @@ const SPI_LINE: SpiLine = SpiLine {
 
 static SPI_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPI0>>> = 
 	Mutex::new(RefCell::new(None));
-static SPIM_HANDLE: Mutex<RefCell<Option<nrf52832_pac::SPIM0>>> = 
-	Mutex::new(RefCell::new(None));
 
 //==============================================================================
 // Public Functions
 //==============================================================================
-pub fn init(spi0: nrf52832_pac::SPI0, spim0: nrf52832_pac::SPIM0) {
-	configure(&spi0, &spim0);
+pub fn init(spi0: nrf52832_pac::SPI0) {
+	configure(&spi0);
 
 	free(|cs| SPI_HANDLE.borrow(cs).replace(Some(spi0)));
-	free(|cs| SPIM_HANDLE.borrow(cs).replace(Some(spim0)));
 }
 
 pub fn write(buf: &[u8]) -> Result<(), SpiError> {
 	free(|cs| {
 		if let Some(ref mut spi) = SPI_HANDLE.borrow(cs).borrow_mut().deref_mut() {
+			spi.enable.write(|w| w.enable().enabled());
+
 			if let Some((last, data)) = buf.split_last() {
 				// If there is a block to be written
 				if !data.is_empty() {
@@ -91,6 +89,9 @@ pub fn write(buf: &[u8]) -> Result<(), SpiError> {
 				rx_byte(spi)?;
 			}
 
+			spi.enable.write(|w| w.enable().disabled());
+			gpio::set_pin_state(config::SPI_SCLK_PIN, gpio::PinState::PinHigh);
+
 			Ok(())
 		}
 		else {
@@ -99,6 +100,7 @@ pub fn write(buf: &[u8]) -> Result<(), SpiError> {
 	})
 }
 
+#[allow(dead_code)]
 pub fn write_u16(data: u16, len: u32) -> Result<(), SpiError> {
 	// Build a single block and setup the DMA once
 	let block: [u16; 128] = [data; 128];
@@ -122,7 +124,7 @@ pub fn write_u16(data: u16, len: u32) -> Result<(), SpiError> {
 //==============================================================================
 // Private Functions
 //==============================================================================
-fn configure(spi: &nrf52832_pac::SPI0, spim: &nrf52832_pac::SPIM0) {
+fn configure(spi: &nrf52832_pac::SPI0) {
 	spi.enable.write(|w| w.enable().disabled());
 
 	// Configure SCLK pin
@@ -144,11 +146,7 @@ fn configure(spi: &nrf52832_pac::SPI0, spim: &nrf52832_pac::SPIM0) {
 		.cpol().variant(SPI_LINE.cpol)
 	);
 
-	// Ensure we are using the ArrayList structure
-	spim.rxd.list.write(|w| w.list().variant(nrf52832_pac::spim0::rxd::list::LIST_A::ARRAYLIST));
-	spim.txd.list.write(|w| w.list().variant(nrf52832_pac::spim0::txd::list::LIST_A::ARRAYLIST));
-
-	spi.enable.write(|w| w.enable().enabled());
+	gpio::set_pin_state(config::SPI_SCLK_PIN, gpio::PinState::PinHigh);
 }
 
 fn rx_byte(spi: &nrf52832_pac::SPI0) -> Result<u8, SpiError> {

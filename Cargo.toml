@@ -12,6 +12,7 @@ device = []
 [dependencies]
 cortex-m = "0.7.2"
 cortex-m-semihosting = "0.3.7"
+heapless = "0.6.1"
 panic-halt = "0.2.0"
 
 [dependencies.nrf52832-pac]
