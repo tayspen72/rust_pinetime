@@ -121,12 +121,14 @@ fn get_digits(is_military_time: bool) -> [u8; 4] {
 	]
 }
 
-fn update_add_second() {
+fn update_add_second() -> bool {
+	let mut update_needed: bool = false;
 	free(|cs| {
 		let mut time = TIME.borrow(cs).get();
 		time.seconds += 1;
 
 		if time.seconds >= 60 {
+			update_needed = true;
 			time.seconds = 0;
 			time.minutes += 1;
 		
@@ -142,6 +144,7 @@ fn update_add_second() {
 
 		TIME.borrow(cs).set(time);
 	});
+	update_needed
 }
 
 fn write(digits: [u8; 4], force_update: bool) {
@@ -183,9 +186,10 @@ pub fn task_handler(d: &mut info::DeviceInfo) {
 	unsafe {
 		if rtc::get_timediff(LAST_TIMESTAMP) >= 1 {
 			LAST_TIMESTAMP = rtc::get_timestamp();
-			update_add_second();
-			d.change_flags.time_change = true;
-			d.time = free(|cs| TIME.borrow(cs).get());
+			if update_add_second() {
+				d.change_flags.time_change = true;
+				d.time = free(|cs| TIME.borrow(cs).get());
+			}
 		}
 	}
 }
