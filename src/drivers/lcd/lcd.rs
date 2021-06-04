@@ -8,7 +8,6 @@
 // Crates and Mods
 //==============================================================================
 use heapless::Vec;
-use heapless::consts::{U254, U255};
 use crate::config;
 use crate::drivers::log;
 use crate::mcu::{gpio, spi, spim, timer};
@@ -90,7 +89,7 @@ pub fn write_block(data: &[u8]) {
 
 	let mut bytes_remaining = data.len();
 	let mut current_index: usize = 0;
-	let mut v: Vec<u8, U255> = Vec::new();
+	let mut v: Vec<u8, 255> = Vec::new();
 
 	while bytes_remaining > 0 {
 		v.clear();
@@ -128,7 +127,7 @@ pub fn write_block_solid(color: u16, len: u32) {
 	let block: [u8; 254] = unsafe {
 		core::mem::transmute::<[u16; 127], [u8; 254]>(block)
 	};
-	let mut v: Vec<u8, U254> = Vec::new();
+	let mut v: Vec<u8, 254> = Vec::new();
 	let mut remaining = len;
 	if let Ok(()) = v.extend_from_slice(&block[..]) {
 		while remaining > 0 {
